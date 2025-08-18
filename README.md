@@ -1,6 +1,6 @@
 # EUV Tin Droplet — Laser Pre-Pulse Simulation (MPh + COMSOL)
 
-This project models the interaction of a high-energy laser pulse with a **2D planar** liquid tin droplet (sphere → pancake transition) for EUV lithography sources.  
+This project models the interaction of a high-energy laser pulse with a **2D planar** liquid tin droplet (sphere → pancake transition) for EUV lithography sources.
 It is implemented in **Python** using the [MPh](https://github.com/MPh-py/MPh) wrapper over the COMSOL Java API to automate geometry creation, physics/BC assignment, solving, and post-processing.
 
 ---
@@ -9,36 +9,37 @@ It is implemented in **Python** using the [MPh](https://github.com/MPh-py/MPh) w
 
 - **All-Python pipeline** via MPh (no manual GUI steps required).
 - **Externalized parameters** (no hardcoding): global material/geometry/solver values in `global_parameters_pp_v2.txt`, laser/beam in `laser_parameters_pp_v2.txt`, and an analytic laser pulse `P(t)` in `Ppp_analytic_expression.txt`.
-- Physics: Heat Transfer (HT), Transport of Diluted Species (TDS), Laminar Flow (SPF), **ALE** moving mesh, **surface tension**, **Marangoni**, **recoil pressure**, **evaporation** with latent-heat sink at the surface.
-- **Fresnel absorption** at the droplet boundary with a Gaussian spatial profile and user-defined `P(t)`.
-- **Reproducible outputs** (PNG + CSV) and a saved `.mph` model for GUI inspection.
+- **Advanced Physics:** Heat Transfer (HT), Transport of Diluted Species (TDS), Laminar Flow (SPF), **ALE** moving mesh, **surface tension**, **Marangoni effect**, **recoil pressure**, and **Hertz-Knudsen evaporation** with a latent-heat sink.
+- **Robust Laser Modeling:** Fresnel absorption at the droplet boundary with a Gaussian spatial profile and user-defined `P(t)`. Includes an automatic "shadowing" effect.
+- **Reproducible outputs** (PNG + CSV) and a saved `.mph` model with custom views for easy GUI inspection.
 
 ---
 
 ## 📦 Repository Structure
+```
 .
 ├─ src/
-│ └─ pp_model.py              # main MPh script (build → solve → post → save)
+│ └─ pp_model.py              # Main MPh script (build → solve → post → save)
 ├─ data/
 │ ├─ global_parameters_pp_v2.txt
 │ ├─ laser_parameters_pp_v2.txt
 │ └─ Ppp_analytic_expression.txt
-├─ results/                   # outputs written here (PNG, CSV, MPH)
-├─ pyproject.toml             # (optional) project metadata/deps if using uv sync
-├─ requirements.txt           # (optional) fallback deps
+├─ results/                   # Outputs written here (PNG, CSV, MPH)
+├─ EVAPORATION_PHYSICS_REFERENCE/ # Reference COMSOL model for evaporation
+├─ pyproject.toml             # Project metadata and dependencies for uv
+├─ requirements.txt           # Dependencies for pip
 └─ README.md
+```
 
-
-> Note: The script defaults to reading parameters from `data/` and writing all outputs to `results/`. You can override paths with CLI flags.
+> Note: The script defaults to reading parameters from `data/` and writing all outputs to `results/`. You can override these paths with CLI flags.
 
 ---
 
 ## 🔧 Requirements
 
 - **COMSOL Multiphysics 6.2** (with Java API available) and a valid license.
-- **Python 3.10+** (3.11/3.12/3.13 also fine).
-- **MPh** (tested with 1.2.x) + **JPype1** (MPh installs it).
-- Windows (primary target). Linux works similarly; see notes below.
+- **Python 3.10+**.
+- **MPh** library (installs automatically with the steps below).
 
 ---
 
@@ -46,61 +47,72 @@ It is implemented in **Python** using the [MPh](https://github.com/MPh-py/MPh) w
 
 You can use **uv** (recommended) or plain **pip**.
 
-### Option A — uv (recommended)
+### Option A — uv (Recommended)
 
 ```bash
-# from the repo root
-uv venv EUV_SIM
+# Create a virtual environment
+uv venv
+
+# Activate the environment
 # Windows PowerShell:
-.\EUV_SIM\Scripts\Activate.ps1
-# Bash (WSL/macOS/Linux):
-source EUV_SIM/bin/activate
+.\.venv\Scripts\Activate.ps1
+# Bash (Linux/macOS):
+source .venv/bin/activate
 
 # Install dependencies
-# If you have a pyproject.toml with deps:
-uv sync
-# OR, if you have requirements.txt:
 uv pip install -r requirements.txt
+```
 
-# Ensure MPh is present (installs JPype1 too)
-uv pip install mph
+### Option B — pip
 
-# Run from repo root (parameters are read from data/ by default)
+```bash
+# Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows, use `.venv\Scripts\activate`
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+---
+
+## 🚀 Running the Simulation
+
+```bash
+# Run from the repository root
 python src/pp_model.py
 
-# Parameter-only parse (no COMSOL, sanity check)
-python src/pp_model.py --check-params-only
+# Run with custom output and parameter directories
+python src/pp_model.py --params-dir ./data --out-dir ./results
 
-# Override time list and output directory
-python src/pp_model.py --tlist "range(0, 5e-9, 400)" --outdir results
-On success, you should see:
+# Run without solving to just generate the .mph model file
+python src/pp_model.py --no-solve
+```
 
-results/pp_temperature.png — temperature field snapshot
+On a successful run, you will find the following in your output directory:
+- `pp_temperature.png`: Snapshot of the temperature field.
+- `pp_T_vs_time.csv`: Time history of the average temperature.
+- `pp_massloss_vs_time.csv`: Time history of the total mass loss rate.
+- `pp_radius_vs_time.csv`: Time history of the droplet radius.
+- `pp_model_created.mph`: The COMSOL model file, which you can open in the GUI. It includes a custom "Droplet View" for easier inspection.
 
-results/pp_T_vs_time.csv — temperature vs time (global metric)
+---
 
-results/pp_massloss_vs_time.csv — evaporative mass flux integral
+## 🧠 Physics & Couplings
 
-results/pp_radius_vs_time.csv — apparent radius vs time
+### Laser Heating (Boundary)
+The laser is modeled as a boundary heat source applied to the droplet surface. The heat flux `q_abs_2D` is defined as:
+`q_abs_2D = A_PP * I_xy * max(0, nx)`
+where `I_xy` is the Gaussian spatial profile of the laser beam. The `max(0, nx)` term cleverly ensures that the heat is only applied to the laser-facing side of the droplet (where the x-component of the surface normal `nx` is positive), automatically creating a shadow region.
 
-results/pp_model_created.mph — open this in the COMSOL GUI
+### Evaporation Physics
+The model uses the **Hertz-Knudsen** equation to describe the evaporative mass flux `J_evap` from the droplet surface, which is appropriate for evaporation into a vacuum or low-pressure environment. This flux is coupled to:
+- **Heat Transfer:** A latent heat sink (`-L_v * J_evap`) is applied to the droplet surface, modeling evaporative cooling.
+- **Species Transport:** The `Transport of Diluted Species` interface uses the evaporative flux as a source term.
+- **Moving Mesh:** The `ALE` interface uses the fluid velocity at the surface (which is affected by evaporation) to deform the mesh.
 
-If you prefer all outputs in results/, set those paths at the top of pp_model.py.
-
-🧠 Physics & Couplings (high level)
-
-Laser heating (boundary):
-q_abs_2D = A_PP * (2/(pi*w0^2)) * P(t) * exp(-2*((x-x_beam)^2+(y-y_beam)^2)/w0^2) * max(0, nx)
-Applied on the entire droplet surface; max(0, nx) masks the shadowed side.
-
-Evaporation:
-Tin vapor leaves the surface with flux J_evap (Hertz–Knudsen or diffusion-limited).
-Latent heat sink in HT uses -L_v * J_evap on the same boundary.
-
-Capillarity / Marangoni / Recoil:
-sigma(T) = sigma0 + dSigma_dT (T − T_ref); tangential stress via dSigma_dT;
-normal stress from p_recoil (e.g., proportional to p_sat(T) or absorbed intensity).
-
-ALE:
-Prescribed normal mesh velocity equals fluid normal velocity at the free surface;
-free deformation smoothing elsewhere.
+### Advanced Fluid Dynamics
+The `Laminar Flow` interface includes several important effects for modeling laser-droplet interaction:
+- **Surface Tension:** Standard surface tension forces.
+- **Marangoni Effect:** Surface tension gradients caused by temperature differences on the droplet surface.
+- **Recoil Pressure:** Pressure exerted on the surface by the evaporating material.
