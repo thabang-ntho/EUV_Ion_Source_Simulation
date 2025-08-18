@@ -1,0 +1,13 @@
+[project]
+name = "euv_simulation"
+version = "0.1.0"
+description = "Simulation of laser-tin droplet interaction for EUV lithography using MPh and COMSOL"
+authors = [
+  { name="Your Name", email="your.email@example.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+  "mph",
+]
+
+

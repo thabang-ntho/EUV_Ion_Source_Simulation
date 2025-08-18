@@ -1,0 +1,27 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv
+EUV_SIM/
+*.mphtxt
+*.mphbin
+*.mph
+*.class
+*.log
+*.csv
+*.png
+
+# Outputs
+results/
+data/*.csv
+data/*.png
+
+LITERATURE/
+
+# Ignore mph_usage_reference.py script
+mph_usage_reference.py
+
+# Ignore EVAPORATION directory
+EVAPORATION/

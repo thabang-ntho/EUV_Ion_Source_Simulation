@@ -1,0 +1,1 @@
+P_ramp_max*((t - t_ramp_start)/tau_ramp)*(flc2hs(t - t_ramp_start, eps_t) - flc2hs(t - t_ramp_end, eps_t)) + P_square*(flc2hs(t - t_sq_start, eps_t) - flc2hs(t - t_sq_end, eps_t))

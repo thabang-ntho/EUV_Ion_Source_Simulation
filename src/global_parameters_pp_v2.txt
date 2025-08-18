@@ -1,0 +1,25 @@
+# Geometry
+R_drop = 25[um]
+X_max  = 200[um]
+Y_max  = 200[um]
+
+# Tin material
+rho_Sn = 6990[kg/m^3]
+cp_Sn  = 230[J/(kg*K)]
+k_Sn   = 30[W/(m*K)]
+mu_Sn  = 0.002[Pa*s]
+sigma0 = 0.55[N/m]
+dSigma_dT = -1.2e-4[N/(m*K)]
+L_v   = 2.96e6[J/kg]
+M_Sn  = 0.11871[kg/mol]
+
+# Gas properties & constants
+rho_gas = 0.4[kg/m^3]
+cp_gas  = 1000[J/(kg*K)]
+k_gas   = 0.03[W/(m*K)]
+mu_gas  = 2e-5[Pa*s]
+R_gas   = 8.314[J/(mol*K)]
+p_amb   = 10[Pa]
+
+# Solver
+tlist = range(0, 5e-9, 400)

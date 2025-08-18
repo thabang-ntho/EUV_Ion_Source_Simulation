@@ -1,0 +1,36 @@
+# Beam / absorption
+A_PP  = 0.6                # Fresnel absorptivity
+w0    = 40[um]             # 1/e^2 radius
+x_beam = 0[um]
+y_beam = 0[um]
+recoil_coeff = 0.1
+
+# Evaporation (Hertz–Knudsen)
+HK_gamma = 1
+# Optional: analytic vapor-pressure law (creates p_sat(T) function)
+p_sat_expr = 1e5*exp(-C1/T + C2)   # f replace with a real tin fit
+
+# Time / pulse scales used by P(t), if referenced
+t_ramp_start = 0[ns]
+t_ramp_end   = 1[ns]
+t_sq_start   = 1[ns]
+t_sq_end     = 4[ns]
+# Normalize style with '=' and keep symbolic relationships.
+lambda_pp = 1.064e-06[m]                         # pre-pulse wavelength
+A_PP      = 0.056                                 # absorptivity at 1.064 um (Fresnel)
+E_PP_total = 0.015[J]                             # total pre-pulse energy
+E_PP_ramp  = 0.0005[J]                            # ramp energy
+tau_ramp   = 1.67e-07[s]                          # ramp duration
+tau_square = 1e-08[s]                             # square duration
+# If d_beam is defined elsewhere, this expression will resolve in COMSOL;
+# otherwise set w0 numerically.
+w0 = d_beam/sqrt(2*log(2))                        # 1/e2 beam radius
+t_ramp_start = 0[s]                               # ramp start time
+t_ramp_end   = t_ramp_start+tau_ramp              # ramp end time
+t_sq_start   = t_ramp_end                         # square start time
+t_sq_end     = t_sq_start+tau_square              # square end time
+eps_t = 5e-10[s]                                  # smoothing size for flc2hs
+P_ramp_max = 2*E_PP_ramp/tau_ramp                 # ramp peak power
+P_square   = (E_PP_total-E_PP_ramp)/tau_square    # square power
+# q_abs_2D is defined in the model script; this line remains commented to avoid conflicts.
+# q_abs_2D = A_PP*(2/(pi*w0^2))*Ppp(t)*exp(-2*(y-y_beam)^2/w0^2)*max(0,nx)  # absorbed flux W/m^2 (2D)
