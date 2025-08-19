@@ -295,6 +295,28 @@ make check-fresnel
 make check-kumar
 ```
 
+---
+
+## 🔀 Branching Strategy & CI
+
+Branches:
+- `main` — protected, always green. Merges happen via PR with tests passing and at least one review.
+- `dev` — active development. Feature branches open PRs into `dev`. Small PRs may merge to `dev` directly after tests pass.
+
+CI:
+- GitHub Actions runs tests on pushes and PRs to `main` and `dev` (`.github/workflows/ci.yml`).
+- Use `uv` for fast, reproducible installs.
+
+Contribution flow:
+1. Branch from `dev`: `git checkout -b feature/<short-name>`
+2. Commit changes and push.
+3. Open a PR into `dev`; ensure tests pass.
+4. Periodically open a release PR from `dev` to `main` with version bump and changelog.
+
+Protections:
+- `main`: requires PR review, conversation resolution, no force-push, no deletion.
+- `dev`: lighter rules to enable iteration.
+
 ## 🧩 Configuration & Validation (new)
 
 You can provide a structured YAML config at `data/config.yaml` (optionally overridden by `data/config.local.yaml`). The loader merges base → override and validates with Pydantic. Existing legacy text parameter files remain supported.
