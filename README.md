@@ -295,6 +295,21 @@ make check-fresnel
 make check-kumar
 ```
 
+### Optional: Local pre-push test gate
+
+Enable a fast pre-push gate to catch issues before pushing:
+
+```bash
+git config core.hooksPath .githooks
+chmod +x .githooks/pre-push
+```
+
+Bypass in emergencies:
+
+```bash
+SKIP_PREPUSH=1 git push
+```
+
 ### Local vs CI (COMSOL-aware)
 
 Some integration tests require a COMSOL license. These are marked with `@pytest.mark.comsol` and are skipped in CI by default.
