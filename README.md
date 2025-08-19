@@ -314,10 +314,13 @@ SKIP_PREPUSH=1 git push
 
 Some integration tests require a COMSOL license. These are marked with `@pytest.mark.comsol` and are skipped in CI by default.
 
-Local developer workflow:
+Local developer workflow (use the repo virtual env):
 
 ```bash
-# Fast unit tests
+# Activate project venv (recommended)
+source .venv/bin/activate
+
+# Fast unit tests (uses PYTHONPATH=$PWD in Makefile)
 make test
 
 # COMSOL integration tests (requires license)
@@ -327,6 +330,11 @@ make test-comsol
 make check-fresnel
 make check-kumar
 ```
+
+Notes:
+- If uv warns about hardlinking, set `UV_LINK_MODE=copy` or pass `--link-mode=copy`.
+- If you prefer editable installs: `uv pip install -e .[dev]` inside `.venv`.
+- CI runs in fresh environments and doesn’t require your local COMSOL license.
 
 ---
 
