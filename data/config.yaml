@@ -1,0 +1,58 @@
+schema_version: 0.1.0
+simulation:
+  time_end: 1.0e-7
+geometry:
+  R: 1.35e-5   # m
+  Lx: 2.0e-4   # m
+  Ly: 3.0e-4   # m
+  x_beam: 1.0e-4
+  y_beam: 1.5e-4
+materials:
+  rho_Sn: 6970
+  cp_Sn: 255
+  k_Sn: 33
+  mu_Sn: 0.002
+  M_Sn: 0.11871   # kg/mol
+  L_v: 2.96e6     # J/kg
+  sigma0: 0.55
+  dSigma_dT: -3.0e-4
+  T_ref: 505
+environment:
+  gas: none       # none|H2
+  pressure_torr: 10.0
+  p_amb: 1.333    # Pa (10 mTorr)
+  T_amb: 300
+  diffusivity_law: t175_over_p  # optional gas D-law for TDS
+  Dm0: 1.0e-3      # base diffusivity [m^2/s]
+laser:
+  A_PP: 0.30
+  w0: 1.7e-5
+  E_PP_total: 8.0e-4
+  temporal_profile: gaussian
+  tau_ramp: 0.0
+  tau_square: 1.0e-8
+  laser_theta_deg: 0.0
+  illum_mode: cos_inc
+absorption:
+  model: fresnel
+  use_nk: false         # if true, compute A_PP from n,k file at lambda_um
+  nk_file: null         # e.g., data/nk_tin.xlsx
+  lambda_um: 1.064
+  use_precomputed: true
+  autogenerate_if_missing: true
+evaporation:
+  HK_gamma: 1.0
+  p_sat_option: kumar_sn
+  p_sat_expr: null
+  beta_r: 0.15
+  clamp_nonneg: false
+radiation:
+  emissivity: 0.10
+mesh:
+  refine_surface: true
+  refine_beam_sigma: 1.0
+  n_bl: 5
+  bl_thick: 0.02
+  evaporation_mesh: false
+outputs:
+  out_dir: results

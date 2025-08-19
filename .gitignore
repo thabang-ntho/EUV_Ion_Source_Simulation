@@ -12,6 +12,8 @@ EUV_SIM/
 *.log
 *.csv
 *.png
+build/
+*.egg-info/
 
 # Outputs
 results/
@@ -23,5 +25,8 @@ LITERATURE/
 # Ignore mph_usage_reference.py script
 mph_usage_reference.py
 
-# Ignore EVAPORATION directory
-EVAPORATION/
+# Ignore EVAPORATION_PHYSICS_REFERENCE directory
+EVAPORATION_PHYSICS_REFERENCE/
+
+# Ignore KUMAR-2D
+KUMAR-2D

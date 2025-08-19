@@ -1,7 +1,7 @@
-# Geometry
-R_drop = 25[um]
-X_max  = 200[um]
-Y_max  = 200[um]
+# Geometry (planar 2D): rectangle [0..Lx]×[0..Ly] with a circle of radius R
+R_drop = 25[um]         # droplet radius (alias for R)
+X_max  = 200[um]        # half-width used to derive Lx = 2*X_max (legacy)
+Y_max  = 200[um]        # half-height used to derive Ly = 2*Y_max (legacy)
 
 # Tin material
 rho_Sn = 6990[kg/m^3]
@@ -22,5 +22,5 @@ mu_gas  = 2e-5[Pa*s]
 R_gas   = 8.314[J/(mol*K)]
 p_amb   = 10[Pa]
 
-# Solver
+# Solver (time stepping list)
 tlist = range(0, 5e-9, 400)

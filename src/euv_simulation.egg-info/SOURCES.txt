@@ -1,9 +1,0 @@
-README.md
-pyproject.toml
-src/pp_model.py
-src/EUV_SIM/bin/activate_this.py
-src/euv_simulation.egg-info/PKG-INFO
-src/euv_simulation.egg-info/SOURCES.txt
-src/euv_simulation.egg-info/dependency_links.txt
-src/euv_simulation.egg-info/requires.txt
-src/euv_simulation.egg-info/top_level.txt

@@ -1,13 +1,36 @@
 [project]
 name = "euv_simulation"
 version = "0.1.0"
-description = "Simulation of laser-tin droplet interaction for EUV lithography using MPh and COMSOL"
+description = "Simulation of laser–tin droplet interaction for EUV lithography using MPh and COMSOL (via MPh)"
 authors = [
-  { name="Your Name", email="your.email@example.com" }
+  { name = "Your Name", email = "your.email@example.com" }
 ]
 requires-python = ">=3.10"
 dependencies = [
   "mph",
+  "PyYAML>=6.0",
+  "numpy>=1.24,<2",
+  "pandas>=2.0",
+  "matplotlib>=3.7",
+  "openpyxl>=3.1",
+  "pydantic>=2.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pytest>=7",
+  "pytest-cov>=4",
+]
+nk = [
+  "pandas>=1.5",
+]
 
+[tool.setuptools]
+package-dir = {"" = "."}
+packages = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+
+[project.scripts]
+euv-sim = "src.pp_model:main"

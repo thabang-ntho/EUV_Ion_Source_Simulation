@@ -1,7 +1,0 @@
-Metadata-Version: 2.4
-Name: euv_simulation
-Version: 0.1.0
-Summary: Simulation of laser-tin droplet interaction for EUV lithography using MPh and COMSOL
-Author-email: Your Name <your.email@example.com>
-Requires-Python: >=3.10
-Requires-Dist: mph
