@@ -28,3 +28,29 @@ jobs:
       - name: Run tests
         run: |
           uv run pytest -q
+
+  smoke:
+    name: smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: '3.12'
+
+      - name: Install runtime deps
+        run: |
+          uv pip install -e .
+
+      - name: Check-only (fresnel)
+        run: |
+          uv run python src/pp_model.py --check-only --absorption-model fresnel
+
+      - name: Check-only (kumar)
+        run: |
+          uv run python src/pp_model.py --check-only --absorption-model kumar
