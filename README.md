@@ -295,6 +295,24 @@ make check-fresnel
 make check-kumar
 ```
 
+### Local vs CI (COMSOL-aware)
+
+Some integration tests require a COMSOL license. These are marked with `@pytest.mark.comsol` and are skipped in CI by default.
+
+Local developer workflow:
+
+```bash
+# Fast unit tests
+make test
+
+# COMSOL integration tests (requires license)
+make test-comsol
+
+# Quick build/CLI sanity without COMSOL
+make check-fresnel
+make check-kumar
+```
+
 ---
 
 ## 🔀 Branching Strategy & CI
@@ -315,7 +333,7 @@ Contribution flow:
 
 Protections:
 - `main`: requires PR review, conversation resolution, no force-push, no deletion.
-- `dev`: lighter rules to enable iteration.
+- `dev`: requires CI checks (tests, smoke) but no reviews by default. You may push directly or use PRs for visibility.
 
 ## 🧩 Configuration & Validation (new)
 

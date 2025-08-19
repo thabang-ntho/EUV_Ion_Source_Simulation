@@ -1,6 +1,6 @@
 PYTHON := python
 
-.PHONY: install install-dev test check-fresnel check-kumar provenance lint test-cov clean
+.PHONY: install install-dev test test-comsol check-fresnel check-kumar provenance lint test-cov clean
 
 install:
 	uv pip install -e .
@@ -10,6 +10,9 @@ install-dev:
 
 test:
 	PYTHONPATH=$$(pwd) uv run pytest -q
+
+test-comsol:
+	PYTHONPATH=$$(pwd) uv run pytest -m comsol -q
 
 check-fresnel:
 	uv run python src/pp_model.py --check-only --absorption-model fresnel
