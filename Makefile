@@ -1,6 +1,6 @@
 PYTHON := python
 
-.PHONY: install install-dev test test-comsol check-fresnel check-kumar smoke provenance lint test-cov clean
+.PHONY: install install-dev test test-comsol check-fresnel check-kumar smoke provenance lint lint-docs test-cov clean
 
 install:
 	uv pip install -e .
@@ -30,6 +30,14 @@ lint:
 	@command -v ruff >/dev/null 2>&1 && ruff check . || \
 	  (command -v flake8 >/dev/null 2>&1 && flake8 || \
 	   echo "No linter (ruff/flake8) found; skipping lint.")
+
+lint-docs:
+	@echo "Running markdownlint..." && \
+	command -v markdownlint >/dev/null 2>&1 || echo "Tip: npm i -g markdownlint-cli"; \
+	markdownlint "**/*.md" --ignore node_modules --config .markdownlint.jsonc || true; \
+	echo "Running Vale..." && \
+	command -v vale >/dev/null 2>&1 || echo "Tip: install Vale from https://vale.sh/"; \
+	vale . || true
 
 test-cov:
 	PYTHONPATH=$$(pwd) uv run pytest --cov=src --cov-report=xml:coverage.xml -q
