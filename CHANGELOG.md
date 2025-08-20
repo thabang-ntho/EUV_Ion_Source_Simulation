@@ -46,3 +46,44 @@ Notes
 
 This release is prepared in PR #1 (dev → main) and is non-breaking.
 
+## Phase 1.1 — Config caching, milestones, compare CLI (2025-08-20)
+
+Additive enhancements building on Phase 1, keeping defaults unchanged.
+
+- Configuration:
+  - Content-hash caching (merged YAML + env-sensitive keys: COMSOL_HOST/PORT, JAVA_HOME, COMSOL_HOME) in `src/core/config/loader.py`.
+  - Frozen Pydantic models provide an immutable view; `schema_version` attached if missing.
+- Logging & provenance:
+  - Milestones (`build_start`, `build_done`, pre/post_solve reserved) and phase timers emit JSON events; RSS memory reported where available.
+  - Provenance enriched with Python/OS/MPh/NumPy versions, git commit + dirty flag, schema_version, optional seeds (`PYTHONHASHSEED`, `SEED`, `RANDOM_SEED`), and inputs manifest (paths + SHA-256).
+  - Fresnel runs automatically include Sizyuk tables (if present) in provenance inputs.
+- Errors:
+  - `SimError` now carries an optional `suggested_fix`; standardized exit code constants added.
+- Session (scaffold):
+  - `src/core/session.py` context manager for MPh/COMSOL with bounded retries and targeted diagnostics; not used by default.
+- Runner (scaffold):
+  - `src/core/solvers/runner.py` exposes a lightweight wrapper to emit milestones and write `results/perf_summary.json`. Enable via `--emit-milestones` (default off).
+  - Perf summary now includes timing in seconds and human-readable strings: `build_dt_s`, `build_dt_str`, and when solving, `solve_dt_s`, `solve_dt_str`.
+- Results & CLI:
+  - `src/io/results.py` adds `compare_results(baseline, candidate, rtol, atol)`.
+  - New CLI `euv-compare` and Make target `make compare` for CSV-based regression checks.
+  - `src/pp_model.py` supports `--compare-*` flags to run comparisons without building.
+- Docs & tests:
+  - README updated with milestones, provenance fields, compare CLI, and inputs manifest behavior.
+  - ADRs: `docs/adr/ADR-0001-session-and-config.md`, `docs/adr/ADR-0002-adapters-and-results.md`.
+  - Tests: config cache invalidation, provenance enrichment, session context (mocked), and result comparison.
+
+All changes are non-breaking; existing CLI usage and physics remain intact by default.
+
+## 0.1.2 — Phase 1.1 rollout (2025-08-20)
+
+This tag captures the Phase 1.1 additive improvements:
+
+- Config: content-hash caching; frozen Pydantic models; schema_version attachment.
+- Observability: structured logs; milestone + phase timers; RSS; enriched provenance (Python/OS/MPh/NumPy, COMSOL CLI version, git commit+dirty, seeds, inputs manifest); auto-include Sizyuk tables for Fresnel.
+- Runner: `--emit-milestones` optional timing with `results/perf_summary.json` including `build_dt_s/str` and, when solving, `solve_dt_s/str`.
+- CLI & tooling: `euv-compare` script and `--compare-*` flags; Make `compare` target; CSV inputs/outputs manifests in `results/` (additive).
+- Errors: standardized exit codes (0/2/3/4); suggested_fix surfaced when available.
+- COMSOL local-only smokes: session start and CLI build-only; gated by `RUN_COMSOL=1`.
+
+No breaking changes; defaults unchanged.

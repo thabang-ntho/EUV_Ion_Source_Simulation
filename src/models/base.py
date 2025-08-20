@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Literal
 
 
 class AbsorptionModel(ABC):
@@ -24,6 +24,28 @@ class PhysicsVariant(ABC):
         """
         raise NotImplementedError
 
+
+class Solver(ABC):
+    @abstractmethod
+    def build(self, cfg: dict) -> Any:
+        """Build and return a solver-specific model object from config."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def run(self, model: Any, mode: Literal["check", "build", "solve"]) -> dict:
+        """Run according to mode and return artifacts metadata (dict)."""
+        raise NotImplementedError
+
+
+# Optional scaffold: a formal session interface separate from implementation
+class SessionIface(ABC):
+    @abstractmethod
+    def __enter__(self) -> Any:  # returns mph client-like object
+        raise NotImplementedError
+
+    @abstractmethod
+    def __exit__(self, exc_type, exc, tb) -> None:
+        raise NotImplementedError
 
 # TODO(phase-3): plugin discovery via entry points
 # Suggested approach (commented out to avoid runtime behavior changes):

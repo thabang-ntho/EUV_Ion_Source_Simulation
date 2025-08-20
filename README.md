@@ -108,23 +108,6 @@ pip install -e .
 pip install -r requirements.txt  # only if you cannot use pyproject
 ```
 
-### Option C — Bootstrap (one-liner)
-
-```bash
-# Recommended: keeps the venv active in your shell
-source ./bootstrap.sh
-
-# Variants
-source ./bootstrap.sh --no-tests        # skip pytest
-source ./bootstrap.sh --runtime-only    # install runtime deps only
-source ./bootstrap.sh --no-smoke        # skip CLI smoke checks
-```
-
-The script will:
-- Create/activate `.venv`
-- Install deps (dev or runtime-only)
-- Run tests and optional smoke checks (no COMSOL required)
-
 ---
 
 ## 🚀 Running the Simulation
@@ -144,6 +127,10 @@ uv run python src/pp_model.py --params-dir ./data --out-dir ./results
 
 # Build-only (no solve): generate the .mph model
 uv run python src/pp_model.py --no-solve
+
+# Build-only COMSOL smoke (writes .mph; requires local COMSOL)
+uv run python src/pp_model.py --no-solve --emit-milestones --absorption-model fresnel
+uv run python src/pp_model.py --no-solve --emit-milestones --absorption-model kumar
 ```
 
 ### Fresnel Precompute (Sizyuk)
@@ -198,6 +185,18 @@ Quick check-only run with structured logging:
 
 ```bash
 LOG_LEVEL=DEBUG python src/pp_model.py --check-only
+
+Optional milestone logging and perf summary (additive):
+
+uv run python src/pp_model.py --check-only --emit-milestones
+
+This wraps the check path with a lightweight runner that emits explicit milestones
+(build_start/build_done) and writes a `perf_summary.json` into `results/`.
+You can also use it on full runs to time the build phase:
+
+uv run python src/pp_model.py --absorption-model fresnel --emit-milestones --no-solve
+
+When not using `--no-solve` and with `--emit-milestones`, the build and solve phases are timed separately.
 ```
 
 Provenance is written to `results/meta/provenance.json` for both `--check-only` and full runs.
@@ -211,7 +210,61 @@ Structured logging prints JSON lines to stdout. You can set verbosity via an env
 - Environment: `LOG_LEVEL=DEBUG`
 - CLI flag: `--log-level DEBUG`
 
-Provenance metadata (run ID, timestamp, git commit, variant, and config snapshot) is written to `results/meta/provenance.json`.
+Provenance metadata (run ID, timestamp, git, variant, and config snapshot) is written to `results/meta/provenance.json`.
+
+Additional fields captured (best-effort):
+- software: Python, OS, MPh (if importable), COMSOL (n/a without a session)
+  and NumPy (if importable)
+- git: commit and dirty flag
+- schema_version: unified schema version when available
+- inputs: optional input file manifest with SHA-256 if you pass `extras={"inputs": [...]}` to `write_provenance`
+  - seeds: environment-provided seeds like `PYTHONHASHSEED`, `SEED`, `RANDOM_SEED` when present
+  - Fresnel runs: when Sizyuk tables exist under `data/derived/sizyuk/`, they are automatically included in the provenance inputs (CSV + manifest paths with SHA-256).
+
+CSV manifests (additive):
+- `results/inputs_manifest.csv` lists input files (path, exists, sha256).
+- `results/outputs_manifest.csv` lists expected outputs for full runs (MPH, PNG, CSVs) with existence and hashes.
+
+---
+
+## CLI Exit Codes (additive)
+
+The main CLI maps common error classes to exit codes (default behavior unchanged):
+
+- 0: success
+- 2: config error (e.g., invalid YAML)
+- 3: COMSOL license/connect error
+- 4: runtime error (other)
+
+These codes are used only on failures; successful runs remain 0.
+
+---
+
+## Compare Results (Optional CLI)
+
+You can compare two result directories (CSV files) using the additive CLI `euv-compare`.
+
+Examples:
+
+```bash
+# After installing the project (`uv pip install -e .`)
+uv run euv-compare --baseline results/baseline --candidate results/candidate --rtol 1e-5 --atol 1e-8 --json results/compare_report.json
+
+# Or via Make (set BASE and CAND)
+make compare BASE=results/baseline CAND=results/candidate RTOL=1e-5 ATOL=1e-8
+```
+
+The tool compares numeric columns in common CSV files across both directories, prints a JSON summary to stdout, and writes a full report if `--json` is provided. Exit code is `0` when comparisons are within tolerance, `1` otherwise.
+
+You can also invoke comparison via the main CLI (additive; no build):
+
+```bash
+uv run python src/pp_model.py \
+  --compare-baseline results/baseline \
+  --compare-candidate results/candidate \
+  --compare-rtol 1e-5 --compare-atol 1e-8 \
+  --compare-json results/compare_report.json
+```
 
 ---
 
@@ -232,6 +285,8 @@ Example (pretty-printed for readability):
 {"ts": 1690000000.0, "level": "INFO", "event": "phase_start", "phase": "mph_session"}
 {"ts": 1690000001.1, "level": "INFO", "event": "phase_done", "phase": "mph_session", "dt_s": 1.1}
 {"ts": 1690000001.2, "level": "INFO", "event": "step", "name": "params_injected", "pct": 0.2}
+
+Milestones: build_start/build_done, pre_solve, post_solve, mph_saved (future) are logged where applicable. Perf summary writes to `results/perf_summary.json` when using the runner scaffold, including durations in seconds and human-readable format (e.g., `build_dt_s`, `build_dt_str`, `solve_dt_s`, `solve_dt_str`).
 
 
 ## ⚙️ Parameters
