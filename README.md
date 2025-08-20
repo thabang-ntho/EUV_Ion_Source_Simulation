@@ -139,7 +139,7 @@ uv run python src/pp_model.py --no-solve
 uv run python src/pp_model.py --no-solve --emit-milestones --absorption-model fresnel
 uv run python src/pp_model.py --no-solve --emit-milestones --absorption-model kumar
 
-# Adapter smokes are for developers; see `docs/models.md` for details.
+# Adapter smokes are for developers; see `docs/models.md` and `docs/advanced_cli.md` for details.
 ```
 
 ### Fresnel Precompute (Sizyuk)
