@@ -39,22 +39,24 @@ def main():
     ap.add_argument("--log-level", default=None, help="Optional log level: DEBUG|INFO|WARN|ERROR")
     ap.add_argument("--emit-milestones", action="store_true",
                     help="Optional: emit build milestones and write perf_summary.json (additive, default off).")
+    # Advanced/dev flags: hide from --help but keep functioning
+    import argparse as _arg
     ap.add_argument("--summary-only", action="store_true",
-                    help="Optional: suppress JSON logs (set ERROR level) and rely on one-line timing summary with --emit-milestones.")
+                    help=_arg.SUPPRESS)
     ap.add_argument("--use-adapter", action="store_true",
-                    help="Optional: run a minimal adapter smoke (MPh session adapter) and exit. Default off.")
+                    help=_arg.SUPPRESS)
     ap.add_argument("--adapter-build", action="store_true",
-                    help="Optional: build a trivial MPH model via adapter and save to out-dir; exits. Default off.")
+                    help=_arg.SUPPRESS)
     ap.add_argument("--adapter-build-fresnel", action="store_true",
-                    help="Optional: adapter-based trivial model build for Fresnel; exits. Default off.")
+                    help=_arg.SUPPRESS)
     ap.add_argument("--adapter-build-kumar", action="store_true",
-                    help="Optional: adapter-based trivial model build for Kumar; exits. Default off.")
+                    help=_arg.SUPPRESS)
     # Optional results comparison (additive)
-    ap.add_argument("--compare-baseline", type=Path, default=None, help="Optional: baseline results directory (CSV)")
-    ap.add_argument("--compare-candidate", type=Path, default=None, help="Optional: candidate results directory (CSV)")
-    ap.add_argument("--compare-rtol", type=float, default=1e-5, help="Relative tolerance for comparison")
-    ap.add_argument("--compare-atol", type=float, default=1e-8, help="Absolute tolerance for comparison")
-    ap.add_argument("--compare-json", type=Path, default=None, help="Optional path to write full JSON comparison report")
+    ap.add_argument("--compare-baseline", type=Path, default=None, help=_arg.SUPPRESS)
+    ap.add_argument("--compare-candidate", type=Path, default=None, help=_arg.SUPPRESS)
+    ap.add_argument("--compare-rtol", type=float, default=1e-5, help=_arg.SUPPRESS)
+    ap.add_argument("--compare-atol", type=float, default=1e-8, help=_arg.SUPPRESS)
+    ap.add_argument("--compare-json", type=Path, default=None, help=_arg.SUPPRESS)
     args = ap.parse_args()
 
     try:
@@ -147,6 +149,7 @@ def main():
 
         # Optional: results comparison mode (no build)
         if args.compare_baseline and args.compare_candidate:
+            print("[DEPRECATED] Use 'euv-compare' CLI for results comparison. This path remains for continuity.", file=sys.stderr)
             try:
                 from .io.results import compare_results as _compare
             except Exception:

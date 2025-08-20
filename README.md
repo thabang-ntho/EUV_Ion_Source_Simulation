@@ -139,8 +139,7 @@ uv run python src/pp_model.py --no-solve
 uv run python src/pp_model.py --no-solve --emit-milestones --absorption-model fresnel
 uv run python src/pp_model.py --no-solve --emit-milestones --absorption-model kumar
 
-# Adapter smoke (opens MPh session via adapter and exits)
-uv run python src/pp_model.py --use-adapter
+# Adapter smokes are for developers; see `docs/models.md` for details.
 ```
 
 ### Fresnel Precompute (Sizyuk)
@@ -266,14 +265,10 @@ make compare BASE=results/baseline CAND=results/candidate RTOL=1e-5 ATOL=1e-8
 
 The tool compares numeric columns in common CSV files across both directories, prints a JSON summary to stdout, and writes a full report if `--json` is provided. Exit code is `0` when comparisons are within tolerance, `1` otherwise.
 
-You can also invoke comparison via the main CLI (additive; no build):
+For result comparisons, prefer the dedicated CLI:
 
 ```bash
-uv run python src/pp_model.py \
-  --compare-baseline results/baseline \
-  --compare-candidate results/candidate \
-  --compare-rtol 1e-5 --compare-atol 1e-8 \
-  --compare-json results/compare_report.json
+uv run euv-compare --baseline results/baseline --candidate results/candidate --rtol 1e-5 --atol 1e-8 --json results/compare_report.json
 ```
 
 ---
