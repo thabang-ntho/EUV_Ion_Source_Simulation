@@ -16,8 +16,14 @@ from .mph_core.model_builder import ModelBuilder
 from .models.mph_fresnel import FresnelModelBuilder
 from .models.mph_kumar import KumarModelBuilder
 
-# Existing core imports (for config loading)
-from .core.config.loader import load_config
+# Define simple exceptions
+class ConfigError(Exception):
+    """Configuration error"""
+    pass
+
+class SimError(Exception):
+    """Simulation error"""
+    pass
 from .core.errors import ConfigError, SimError
 
 logger = logging.getLogger(__name__)
@@ -153,7 +159,7 @@ Examples:
             
             # Load configuration
             config_path = self._find_config_file(getattr(parsed_args, 'config', None))
-            params = load_config(config_path) if config_path else {}
+            params = self._load_config(str(config_path)) if config_path else {}
             
             # Apply parameter overrides
             if hasattr(parsed_args, 'param') and parsed_args.param:
@@ -217,6 +223,35 @@ Examples:
             handlers=handlers,
             force=True
         )
+    
+    def _load_config(self, config_path: str) -> Dict[str, Any]:
+        """Load configuration parameters from file"""
+        params = {}
+        
+        with open(config_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    if '=' in line:
+                        key, value = line.split('=', 1)
+                        key = key.strip()
+                        value = value.strip()
+                        # Remove units/comments
+                        if '#' in value:
+                            value = value.split('#')[0].strip()
+                        # Remove units in brackets
+                        if '[' in value and ']' in value:
+                            value = value.split('[')[0].strip()
+                        try:
+                            # Try to convert to number
+                            if '.' in value:
+                                params[key] = float(value)
+                            else:
+                                params[key] = int(value)
+                        except ValueError:
+                            params[key] = value
+        
+        return params
     
     def _find_config_file(self, config_path: Optional[str]) -> Optional[Path]:
         """Find configuration file"""

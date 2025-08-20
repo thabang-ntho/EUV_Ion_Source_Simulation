@@ -3,15 +3,70 @@
 This project models the interaction of a high-energy laser pulse with a **2D planar** liquid tin droplet (sphere → pancake transition) for EUV lithography sources.
 It is implemented in **Python** using the [MPh](https://github.com/MPh-py/MPh) wrapper over the COMSOL Java API to automate geometry creation, physics/BC assignment, solving, and post-processing.
 
+> **🚀 NEW: Complete MPh-based Implementation**  
+> The project now features a fully modernized MPh-based architecture with modular design, comprehensive testing, and advanced CLI interface. See [MPh Implementation Guide](docs/mph/user_guide.md) for details.
+
 ---
 
 ## ✨ Key Features
 
-- **All-Python pipeline** via MPh (no manual GUI steps required).
-- **Externalized parameters** (no hardcoding): global material/geometry/solver values in `global_parameters_pp_v2.txt`, laser/beam in `laser_parameters_pp_v2.txt`, and an analytic laser pulse `P(t)` in `Ppp_analytic_expression.txt`.
-- **Advanced Physics:** Heat Transfer (HT), Transport of Diluted Species (TDS), Laminar Flow (SPF), **ALE** moving mesh, **surface tension**, **Marangoni effect**, **recoil pressure**, and **Hertz-Knudsen evaporation** with a latent-heat sink.
-- **Robust Laser Modeling:** Fresnel absorption at the droplet boundary with a Gaussian spatial profile and user-defined `P(t)`. Includes an automatic "shadowing" effect.
-- **Reproducible outputs** (PNG + CSV) and a saved `.mph` model with custom views for easy GUI inspection.
+- **Modern MPh Architecture** with modular design and comprehensive error handling
+- **Two Validated Variants**: Fresnel (evaporation-focused) and Kumar (fluid dynamics-focused) models
+- **Advanced CLI Interface** with parameter overrides, dry-run mode, and validation
+- **All-Python pipeline** via MPh (no manual GUI steps required)
+- **Externalized parameters** with automatic configuration detection
+- **Advanced Physics:** Heat Transfer (HT), Transport of Diluted Species (TDS), Laminar Flow (SPF), **ALE** moving mesh, **surface tension**, **Marangoni effect**, **recoil pressure**, and **Hertz-Knudsen evaporation** with a latent-heat sink
+- **Robust Laser Modeling:** Fresnel absorption at the droplet boundary with a Gaussian spatial profile and user-defined `P(t)`
+- **Comprehensive Testing** with both unit and integration test suites
+- **Reproducible outputs** (PNG + CSV) and saved `.mph` models with custom views
+
+---
+
+## 🎯 Quick Start
+
+### Prerequisites
+- COMSOL Multiphysics 6.2+ with valid license
+- Python 3.9+ with MPh library
+
+### Installation & Setup
+```bash
+# Clone repository
+git clone <repository-url>
+cd EUV_WORK
+
+# Create and activate virtual environment
+source .venv/bin/activate  # Or activate existing venv
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Run Simulations
+
+#### Modern MPh Interface (Recommended)
+```bash
+# List available parameters
+python -m src.mph_cli fresnel --list-params
+python -m src.mph_cli kumar --list-params
+
+# Run Fresnel variant (evaporation-focused)
+python -m src.mph_cli fresnel --solve --output fresnel_model.mph
+
+# Run Kumar variant (fluid dynamics-focused)  
+python -m src.mph_cli kumar --solve --output kumar_model.mph
+
+# Dry run to validate configuration
+python -m src.mph_cli fresnel --dry-run
+
+# Override parameters
+python -m src.mph_cli fresnel --solve -p R_drop=30 -p T_ref=350
+```
+
+#### Legacy Interface (Still Available)
+```bash
+# Original implementation
+python src/pp_model.py
+```
 
 ---
 
@@ -19,35 +74,36 @@ It is implemented in **Python** using the [MPh](https://github.com/MPh-py/MPh) w
 ```
 .
 ├─ src/
-│ └─ pp_model.py              # Main MPh script (build → solve → post → save)
-├─ data/
+│ ├─ mph_core/                # Modern MPh architecture
+│ │ ├─ model_builder.py      # Main orchestrator with context management
+│ │ ├─ geometry.py           # Geometry creation and management
+│ │ ├─ selections.py         # Domain and boundary selections
+│ │ ├─ physics.py            # Physics interface configuration
+│ │ ├─ materials.py          # Material property management
+│ │ ├─ studies.py            # Study and solver configuration
+│ │ └─ postprocess.py        # Results extraction and visualization
+│ ├─ models/                 # Model variants
+│ │ ├─ mph_fresnel.py        # Fresnel evaporation model
+│ │ └─ mph_kumar.py          # Kumar fluid dynamics model
+│ ├─ mph_cli.py              # Modern CLI interface
+│ └─ pp_model.py             # Legacy implementation
+├─ tests/
+│ ├─ mph_integration/        # MPh integration tests
+│ ├─ unit/                   # Unit tests
+│ └─ conftest.py             # Test configuration
+├─ docs/
+│ ├─ mph/                    # MPh implementation documentation
+│ │ ├─ architecture.md       # Architecture overview
+│ │ ├─ user_guide.md         # User guide and examples
+│ │ └─ testing.md            # Testing guide
+│ └─ mph_*.md                # Implementation notes and migration plan
+├─ data/                     # Configuration files
 │ ├─ global_parameters_pp_v2.txt
 │ ├─ laser_parameters_pp_v2.txt
 │ └─ Ppp_analytic_expression.txt
-├─ results/                   # Outputs written here (PNG, CSV, MPH)
-├─ EVAPORATION_PHYSICS_REFERENCE/ # Reference COMSOL models and notes (evaporation & laser HT)
-├─ pyproject.toml             # Project metadata and dependencies for uv
-├─ requirements.txt           # Dependencies for pip
-└─ README.md
+├─ results/                  # Outputs (PNG, CSV, MPH)
+└─ pyproject.toml            # Project metadata and dependencies
 ```
-
-> Notes:
-> - The script reads parameters from `data/` and writes outputs to `results/` by default.
-> - Geometry matches the COMSOL Java demo: a rectangle from `(0,0)` with size `(Lx,Ly)` and a circular droplet of radius `R` centered at `(Lx/2, Ly/2)`.
-> - Laser incidence is direction-aware: default `laser_theta_deg = 0°` means light travels along +x (west → east), heating the west-facing droplet boundary and shadowing the east side.
-> - Beam center defaults: `x_beam = Lx/2`, `y_beam = Ly/2` when not set (or set to zero-like values).
-
----
-
-## Additive Module Layout (Scaffolded)
-
-The following packages are added for future organization (non-breaking, opt-in). See their READMEs for intent and guidelines:
-
-- `src/core/config/` — Configuration management (Pydantic models, loader, factory)
-- `src/core/physics/` — Physics modules scaffolding (HT, TDS, SPF, ALE)
-- `src/core/geometry/` — Geometry builder scaffolding
-- `src/core/solvers/` — Solver/study orchestration scaffolding (runner)
-- `src/core/adapters/` — Adapters layer isolating MPh/COMSOL (scaffold)
 - `src/models/` — Existing Fresnel/Kumar variants; ABCs in `base.py`; simple plugin `registry.py`
 - `src/io/` — IO helpers (CSV/JSON/Parquet) and compare CLI [scaffold]
 - `src/validation/` — Additional validators beyond Pydantic [scaffold]
