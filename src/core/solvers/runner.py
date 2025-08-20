@@ -51,6 +51,12 @@ def run(mode: Literal["check", "build", "solve"], build_fn, solve_fn=None, out_d
         perf["solve_dt_str"] = _fmt_dt(perf.get("solve_dt_s", 0.0))
 
     _write_perf(out / "perf_summary.json", perf)
+    # Print a one-line timing summary for humans (additive)
+    if perf.get("build_dt_str"):
+        line = f"Build: {perf['build_dt_str']}"
+        if perf.get("solve_dt_str"):
+            line += f"; Solve: {perf['solve_dt_str']}"
+        print(line)
     return model
 
 

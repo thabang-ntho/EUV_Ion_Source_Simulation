@@ -11,6 +11,9 @@ Additive scaffolds and developer conveniences:
 - CLI: `--use-adapter` flag to run a minimal MPh adapter smoke and exit (non-breaking).
 - Plugins: explicit registry scaffold with a small example and tests.
 - Config: friendlier schema_version handling with a warning on mismatch.
+- Solvers: added sequential sweep stub (`core/solvers/sweep.py`) for future process-based runs.
+- Manifests: inputs/outputs CSV now include `size_bytes` and `mtime_iso` columns.
+- Runner: prints a one-line timing summary after runs with `--emit-milestones`.
 
 ## Phase 1 — Architecture & Observability (2025-08-19)
 

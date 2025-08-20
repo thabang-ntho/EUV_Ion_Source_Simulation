@@ -98,15 +98,20 @@ def main():
             from hashlib import sha256
             man = out_dir / "outputs_manifest.csv"
             with man.open("w", newline="", encoding="utf-8") as f:
-                w = csv.writer(f); w.writerow(["path", "exists", "sha256"])
-                h = ""
+                import datetime
+                w = csv.writer(f); w.writerow(["path", "exists", "sha256", "size_bytes", "mtime_iso"])
+                h = ""; size = ""; mtime = ""
                 if mph_path.is_file():
                     hobj = sha256()
                     with mph_path.open("rb") as rf:
                         for ch in iter(lambda: rf.read(65536), b""):
                             hobj.update(ch)
                     h = hobj.hexdigest()
-                w.writerow([str(mph_path), mph_path.exists(), h])
+                    try:
+                        stat = mph_path.stat(); size = str(stat.st_size); mtime = datetime.datetime.fromtimestamp(stat.st_mtime).isoformat()
+                    except Exception:
+                        pass
+                w.writerow([str(mph_path), mph_path.exists(), h, size, mtime])
             return
 
         # Optional: results comparison mode (no build)
@@ -201,18 +206,23 @@ def main():
             if inputs:
                 import csv
                 from hashlib import sha256
+                import datetime
                 man = Path(out_dir) / "inputs_manifest.csv"
                 with man.open("w", newline="", encoding="utf-8") as f:
-                    w = csv.writer(f); w.writerow(["path", "exists", "sha256"])
+                    w = csv.writer(f); w.writerow(["path", "exists", "sha256", "size_bytes", "mtime_iso"])
                     for p in inputs:
-                        pth = Path(p); h = ""
+                        pth = Path(p); h = ""; size = ""; mtime = ""
                         if pth.is_file():
                             hobj = sha256()
                             with pth.open("rb") as rf:
                                 for ch in iter(lambda: rf.read(65536), b""):
                                     hobj.update(ch)
                             h = hobj.hexdigest()
-                        w.writerow([str(pth), pth.exists(), h])
+                            try:
+                                stat = pth.stat(); size = str(stat.st_size); mtime = datetime.datetime.fromtimestamp(stat.st_mtime).isoformat()
+                            except Exception:
+                                pass
+                        w.writerow([str(pth), pth.exists(), h, size, mtime])
             return
 
         # Variant dispatch
@@ -284,19 +294,24 @@ def main():
         # Write CSV manifests for quick browsing (additive; portable)
         import csv
         from hashlib import sha256
+        import datetime
         if inputs:
             man = Path(out_dir) / "inputs_manifest.csv"
             with man.open("w", newline="", encoding="utf-8") as f:
-                w = csv.writer(f); w.writerow(["path", "exists", "sha256"])
+                w = csv.writer(f); w.writerow(["path", "exists", "sha256", "size_bytes", "mtime_iso"])
                 for p in inputs:
-                    pth = Path(p); h = ""
+                    pth = Path(p); h = ""; size = ""; mtime = ""
                     if pth.is_file():
                         hobj = sha256()
                         with pth.open("rb") as rf:
                             for ch in iter(lambda: rf.read(65536), b""):
                                 hobj.update(ch)
                         h = hobj.hexdigest()
-                    w.writerow([str(pth), pth.exists(), h])
+                        try:
+                            stat = pth.stat(); size = str(stat.st_size); mtime = datetime.datetime.fromtimestamp(stat.st_mtime).isoformat()
+                        except Exception:
+                            pass
+                    w.writerow([str(pth), pth.exists(), h, size, mtime])
         outs = [
             out_dir / "pp_model_created.mph",
             out_dir / "pp_temperature.png",
@@ -307,16 +322,20 @@ def main():
         ]
         man_o = Path(out_dir) / "outputs_manifest.csv"
         with man_o.open("w", newline="", encoding="utf-8") as f:
-            w = csv.writer(f); w.writerow(["path", "exists", "sha256"])
+            w = csv.writer(f); w.writerow(["path", "exists", "sha256", "size_bytes", "mtime_iso"])
             for p in outs:
-                pth = Path(p); h = ""
+                pth = Path(p); h = ""; size = ""; mtime = ""
                 if pth.is_file():
                     hobj = sha256()
                     with pth.open("rb") as rf:
                         for ch in iter(lambda: rf.read(65536), b""):
                             hobj.update(ch)
                     h = hobj.hexdigest()
-                w.writerow([str(pth), pth.exists(), h])
+                    try:
+                        stat = pth.stat(); size = str(stat.st_size); mtime = datetime.datetime.fromtimestamp(stat.st_mtime).isoformat()
+                    except Exception:
+                        pass
+                w.writerow([str(pth), pth.exists(), h, size, mtime])
     except Exception as e:
         # Map to standardized exit codes when possible
         try:
