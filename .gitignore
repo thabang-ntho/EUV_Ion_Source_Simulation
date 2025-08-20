@@ -25,6 +25,9 @@ LITERATURE/
 # Ignore mph_usage_reference.py script
 mph_usage_reference.py
 
+# MPh example scripts
+mph_example.py
+
 # Ignore EVAPORATION_PHYSICS_REFERENCE directory
 EVAPORATION_PHYSICS_REFERENCE/
 
