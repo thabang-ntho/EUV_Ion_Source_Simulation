@@ -12,7 +12,7 @@ test:
 	PYTHONPATH=$$(pwd) uv run pytest -q
 
 test-comsol:
-	PYTHONPATH=$$(pwd) uv run pytest -m comsol -q
+	RUN_COMSOL=1 PYTHONPATH=$$(pwd) uv run pytest -m comsol -q
 
 check-fresnel:
 	uv run python src/pp_model.py --check-only --absorption-model fresnel
@@ -41,6 +41,13 @@ lint-docs:
 
 test-cov:
 	PYTHONPATH=$$(pwd) uv run pytest --cov=src --cov-report=xml:coverage.xml -q
+
+compare:
+	@if [ -z "$(BASE)" ] || [ -z "$(CAND)" ]; then \
+	  echo "Usage: make compare BASE=results/baseline CAND=results/candidate [RTOL=1e-5 ATOL=1e-8]"; \
+	  exit 2; \
+	fi; \
+	uv run euv-compare --baseline $(BASE) --candidate $(CAND) --rtol $${RTOL:-1e-5} --atol $${ATOL:-1e-8}
 
 clean:
 	find . -type d -name '__pycache__' -prune -exec rm -rf {} + || true

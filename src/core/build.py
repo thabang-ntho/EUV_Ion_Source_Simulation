@@ -454,6 +454,26 @@ def build_model(no_solve: bool, params_dir: Optional[Path], out_dir: Optional[Pa
     return model
 
 
+def solve_and_export(model, out_dir: Path, no_solve: bool) -> None:
+    """Run solve and export tables/plots assuming standard names from build_model.
+
+    This is a thin adapter to support timing the solve phase via the runner
+    without changing default behavior. It relies on object names created by
+    build_model and filenames already set on exporters.
+    """
+    solutions = model / "solutions"; sol = solutions / "solution"
+    exports = model / "exports"
+    img = exports / "image"
+    dataT = exports / "T csv"
+    dataM = exports / "M csv"
+    dataR = exports / "R csv"
+    dataE = exports / "E csv"
+    if not no_solve:
+        sol.java.run(); img.java.run(); dataT.java.run(); dataM.java.run(); dataR.java.run(); dataE.java.run()
+    # Save MPH again to ensure consistency
+    model.save(str(Path(out_dir) / "pp_model_created.mph"))
+
+
 def compute_A_PP_from_nk(cfg) -> Optional[float]:
     """Compute Fresnel absorptivity A from n,k at lambda_um if configured.
 
