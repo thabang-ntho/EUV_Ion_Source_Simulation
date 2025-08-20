@@ -296,7 +296,7 @@ Example (pretty-printed for readability):
 {"ts": 1690000001.1, "level": "INFO", "event": "phase_done", "phase": "mph_session", "dt_s": 1.1}
 {"ts": 1690000001.2, "level": "INFO", "event": "step", "name": "params_injected", "pct": 0.2}
 
-Milestones: build_start/build_done, pre_solve, post_solve, mph_saved (future) are logged where applicable. Perf summary writes to `results/perf_summary.json` when using the runner scaffold, including durations in seconds and human-readable format (e.g., `build_dt_s`, `build_dt_str`, `solve_dt_s`, `solve_dt_str`).
+Milestones: build_start/build_done, pre_solve, post_solve, mph_saved (future) are logged where applicable. Perf summary writes to `results/perf_summary.json` when using the runner scaffold, including durations in seconds and human-readable format (e.g., `build_dt_s`, `build_dt_str`, `solve_dt_s`, `solve_dt_str`). After runs with `--emit-milestones`, a one-line timing summary is printed (e.g., `Build: 00:00:01.234; Solve: 00:00:05.678`).
 
 
 ## ⚙️ Parameters
