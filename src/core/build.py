@@ -274,12 +274,15 @@ def build_model(no_solve: bool, params_dir: Optional[Path], out_dir: Optional[Pa
     log_step(log, "geometry_built", pct=0.35)
 
     selections_java = model.java.selection()
+    # Domain (solid) selection for the droplet interior
     selections_java.create("s_drop", "Disk"); sd = model.java.selection("s_drop")
-    sd.set("type", "solid"); sd.set("r", "0.95*R"); sd.set("pos", ["Lx/2", "Ly/2"])
+    sd.set("entitydim", 2); sd.set("r", "0.95*R"); sd.set("pos", ["Lx/2", "Ly/2"])
+    # Boundary (curve) selection for the droplet surface (adjacent to s_drop)
     selections_java.create("s_surf", "Adjacent"); ss = model.java.selection("s_surf")
-    ss.set("input", ["s_drop"]); ss.set("type", "curve")
+    ss.set("input", ["s_drop"]); ss.set("entitydim", 1)
+    # Domain (solid) selection for the gas region (complement of s_drop)
     selections_java.create("s_gas", "Complement"); sg = model.java.selection("s_gas")
-    sg.set("input", ["s_drop"]); sg.set("type", "solid")
+    sg.set("input", ["s_drop"]); sg.set("entitydim", 2)
 
     cdefs = comp / "definitions"
     variables = cdefs.create("Variables", name="variables")
