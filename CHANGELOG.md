@@ -14,6 +14,7 @@ Additive scaffolds and developer conveniences:
 - Solvers: added sequential sweep stub (`core/solvers/sweep.py`) for future process-based runs.
 - Manifests: inputs/outputs CSV now include `size_bytes` and `mtime_iso` columns.
 - Runner: prints a one-line timing summary after runs with `--emit-milestones`.
+- CLI UX: `--summary-only` suppresses JSON logs and relies on the printed timing summary.
 
 ## Phase 1 — Architecture & Observability (2025-08-19)
 

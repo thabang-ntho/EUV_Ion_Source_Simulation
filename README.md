@@ -206,7 +206,7 @@ You can also use it on full runs to time the build phase:
 
 uv run python src/pp_model.py --absorption-model fresnel --emit-milestones --no-solve
 
-When not using `--no-solve` and with `--emit-milestones`, the build and solve phases are timed separately.
+When not using `--no-solve` and with `--emit-milestones`, the build and solve phases are timed separately. Add `--summary-only` to suppress JSON logs and keep only the one-line timing summary.
 ```
 
 Provenance is written to `results/meta/provenance.json` for both `--check-only` and full runs.

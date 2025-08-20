@@ -39,6 +39,8 @@ def main():
     ap.add_argument("--log-level", default=None, help="Optional log level: DEBUG|INFO|WARN|ERROR")
     ap.add_argument("--emit-milestones", action="store_true",
                     help="Optional: emit build milestones and write perf_summary.json (additive, default off).")
+    ap.add_argument("--summary-only", action="store_true",
+                    help="Optional: suppress JSON logs (set ERROR level) and rely on one-line timing summary with --emit-milestones.")
     ap.add_argument("--use-adapter", action="store_true",
                     help="Optional: run a minimal adapter smoke (MPh session adapter) and exit. Default off.")
     ap.add_argument("--adapter-build", action="store_true",
@@ -53,7 +55,10 @@ def main():
 
     try:
         # Lightweight structured logger
+        # Summary-only mode: suppress JSON logs by raising level to ERROR
         level_env = args.log_level or os.environ.get("LOG_LEVEL", "INFO")
+        if args.summary_only and not args.log_level:
+            level_env = "ERROR"
         log = init_logger(level=level_env)
         repo_root = Path(__file__).resolve().parents[1]
 
