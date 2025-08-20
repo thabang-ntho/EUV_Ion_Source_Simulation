@@ -21,3 +21,9 @@ Notes
 - COMSOL is not invoked here; plan is to orchestrate check-only tasks first.
 - A future process-based runner can wrap this stub with concurrency guards.
 - See `src/core/solvers/sweep_parallel.py` for the stub and planned API.
+
+Manifest and schema (optional)
+
+- A helper `src/io/sweep_manifest.py` can write an index JSON for sweep runs.
+- A draft JSON Schema is provided in `docs/sweeps/manifest.schema.json`.
+- Both are default-off and not used by the CLI yet.
