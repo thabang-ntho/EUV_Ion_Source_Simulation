@@ -108,47 +108,6 @@ pip install -e .
 pip install -r requirements.txt  # only if you cannot use pyproject
 ```
 
-### Option C — Bootstrap (one-liner)
-
-```bash
-# Recommended: keeps the venv active in your shell
-source ./bootstrap.sh
-
-# Variants
-source ./bootstrap.sh --no-tests        # skip pytest
-source ./bootstrap.sh --runtime-only    # install runtime deps only
-source ./bootstrap.sh --no-smoke        # skip CLI smoke checks
-```
-
-The script will:
-- Create/activate `.venv`
-- Install deps (dev or runtime-only)
-- Run tests and optional smoke checks (no COMSOL required)
-
----
-
-## COMSOL Setup & Local Tests
-
-CI does not use COMSOL. To run local COMSOL checks:
-
-- Verify installation:
-  - `which comsol` → e.g., `/usr/local/bin/comsol`
-  - `comsol --version` → e.g., `COMSOL Multiphysics 6.2.x`
-- Optional environment:
-  - `JAVA_HOME` and `COMSOL_HOME` (some setups autodetect)
-  - Remote usage: `COMSOL_HOST`, `COMSOL_PORT`
-- Local quick check (Python):
-  ```bash
-  uv run python - <<'PY'
-  import mph; c = mph.start(); m = c.create('pp_smoke'); print('mph OK')
-  PY
-  ```
-- Run COMSOL-marked tests (one local smoke test included):
-  ```bash
-  make test-comsol   # runs `pytest -m comsol`
-  ```
-
-
 ---
 
 ## 🚀 Running the Simulation
