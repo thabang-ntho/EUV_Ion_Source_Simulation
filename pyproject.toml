@@ -1,6 +1,6 @@
 [project]
 name = "euv_simulation"
-version = "0.1.0"
+version = "0.1.1"
 description = "Simulation of laser–tin droplet interaction for EUV lithography using MPh and COMSOL (via MPh)"
 authors = [
   { name = "Your Name", email = "your.email@example.com" }
