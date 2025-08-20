@@ -438,6 +438,10 @@ def build_model(no_solve: bool, params_dir: Optional[Path], out_dir: Optional[Pa
     dataE = exports.create("Table", name="E csv"); dataE.property("sourceobject", tables / "energy_vs_time"); dataE.property("filename", str(out_dir / "pp_energy_vs_time.csv"))
 
     model.save(str(OUT_MPH))
+    try:
+        milestone(log, "mph_saved", path=str(OUT_MPH))
+    except Exception:
+        pass
     if not no_solve:
         sol.java.run(); img.java.run(); dataT.java.run(); dataM.java.run(); dataR.java.run(); dataE.java.run(); model.save(str(OUT_MPH))
 
@@ -452,6 +456,26 @@ def build_model(no_solve: bool, params_dir: Optional[Path], out_dir: Optional[Pa
         print(f"[OK] PNG      → {PNG}")
         print(f"[OK] CSVs     → {CSV_T} | {CSV_M} | {CSV_R} | {out_dir/'pp_energy_vs_time.csv'}")
     return model
+
+
+def solve_and_export(model, out_dir: Path, no_solve: bool) -> None:
+    """Run solve and export tables/plots assuming standard names from build_model.
+
+    This is a thin adapter to support timing the solve phase via the runner
+    without changing default behavior. It relies on object names created by
+    build_model and filenames already set on exporters.
+    """
+    solutions = model / "solutions"; sol = solutions / "solution"
+    exports = model / "exports"
+    img = exports / "image"
+    dataT = exports / "T csv"
+    dataM = exports / "M csv"
+    dataR = exports / "R csv"
+    dataE = exports / "E csv"
+    if not no_solve:
+        sol.java.run(); img.java.run(); dataT.java.run(); dataM.java.run(); dataR.java.run(); dataE.java.run()
+    # Save MPH again to ensure consistency
+    model.save(str(Path(out_dir) / "pp_model_created.mph"))
 
 
 def compute_A_PP_from_nk(cfg) -> Optional[float]:

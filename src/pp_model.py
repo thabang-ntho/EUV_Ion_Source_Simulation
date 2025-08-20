@@ -8,6 +8,7 @@ from typing import Optional
 import argparse
 import sys
 import os
+import json
 
 # Additive imports (non-breaking)
 try:
@@ -36,6 +37,14 @@ def main():
     ap.add_argument("--absorption-model", choices=["fresnel", "kumar"], default="fresnel",
                     help="Absorption/BC variant to use (default: fresnel).")
     ap.add_argument("--log-level", default=None, help="Optional log level: DEBUG|INFO|WARN|ERROR")
+    ap.add_argument("--emit-milestones", action="store_true",
+                    help="Optional: emit build milestones and write perf_summary.json (additive, default off).")
+    # Optional results comparison (additive)
+    ap.add_argument("--compare-baseline", type=Path, default=None, help="Optional: baseline results directory (CSV)")
+    ap.add_argument("--compare-candidate", type=Path, default=None, help="Optional: candidate results directory (CSV)")
+    ap.add_argument("--compare-rtol", type=float, default=1e-5, help="Relative tolerance for comparison")
+    ap.add_argument("--compare-atol", type=float, default=1e-8, help="Absolute tolerance for comparison")
+    ap.add_argument("--compare-json", type=Path, default=None, help="Optional path to write full JSON comparison report")
     args = ap.parse_args()
 
     try:
@@ -43,6 +52,25 @@ def main():
         level_env = args.log_level or os.environ.get("LOG_LEVEL", "INFO")
         log = init_logger(level=level_env)
         repo_root = Path(__file__).resolve().parents[1]
+
+        # Optional: results comparison mode (no build)
+        if args.compare_baseline and args.compare_candidate:
+            try:
+                from .io.results import compare_results as _compare
+            except Exception:
+                from src.io.results import compare_results as _compare
+            ok, report = _compare(args.compare_baseline, args.compare_candidate, rtol=args.compare_rtol, atol=args.compare_atol)
+            if args.compare_json:
+                args.compare_json.parent.mkdir(parents=True, exist_ok=True)
+                args.compare_json.write_text(json.dumps(report, indent=2), encoding="utf-8")
+            print(json.dumps({"ok": ok, "summary": report.get("files", {})}, indent=2))
+            # One-line summary for humans
+            files = report.get("files", {})
+            n_total = len(files)
+            n_bad = sum(1 for v in files.values() if not v.get("ok", False))
+            status = "OK" if ok else f"FAILED ({n_bad}/{n_total} files over tolerance)"
+            print(f"Comparison: {status}")
+            sys.exit(0 if ok else 1)
 
         # Optional: validate structured config if present (non-breaking)
         cfg_paths = [repo_root / "data" / "config.yaml", repo_root / "data" / "config.local.yaml"]
@@ -60,16 +88,75 @@ def main():
                 from .core.build import build_model as core_build
             except Exception:
                 from core.build import build_model as core_build
-            core_build(
-                no_solve=True,
-                params_dir=args.params_dir,
-                out_dir=args.out_dir,
-                absorption_model=args.absorption_model,
-                check_only=True,
-            )
-            # Write provenance for check-only as well
+            # If requested, wrap with runner to emit explicit milestones and perf
+            if args.emit_milestones:
+                try:
+                    from .core.solvers.runner import run as runner_run
+                except Exception:
+                    from core.solvers.runner import run as runner_run
+                out_dir = (args.out_dir or (repo_root / "results")).resolve()
+                runner_run(
+                    mode="check",
+                    build_fn=lambda: core_build(
+                        no_solve=True,
+                        params_dir=args.params_dir,
+                        out_dir=args.out_dir,
+                        absorption_model=args.absorption_model,
+                        check_only=True,
+                    ),
+                    out_dir=out_dir,
+                    meta={"variant": args.absorption_model},
+                )
+            else:
+                core_build(
+                    no_solve=True,
+                    params_dir=args.params_dir,
+                    out_dir=args.out_dir,
+                    absorption_model=args.absorption_model,
+                    check_only=True,
+                )
+            # Write provenance for check-only as well (include inputs manifest when possible)
             out_dir = (args.out_dir or (repo_root / "results")).resolve()
-            write_provenance(Path(out_dir) / "meta", config_dict={}, variant=args.absorption_model)
+            inputs = []
+            # Prefer structured config
+            present_cfgs = [p for p in cfg_paths if p.exists()]
+            if present_cfgs:
+                inputs.extend([str(p) for p in present_cfgs])
+            else:
+                # Fallback to legacy param files
+                try:
+                    from .core.build import resolve_inputs as _resolve_inputs
+                except Exception:
+                    from core.build import resolve_inputs as _resolve_inputs
+                try:
+                    gp, lp, px = _resolve_inputs(args.params_dir)
+                    inputs.extend([str(gp), str(lp), str(px)])
+                except Exception:
+                    pass
+            # Include Sizyuk tables if Fresnel and present
+            if args.absorption_model == "fresnel":
+                sizyuk_dir = repo_root / "data" / "derived" / "sizyuk"
+                for fn in ("absorptivity_vs_lambda.csv", "reflectivity_vs_lambda.csv", "sizyuk_manifest.json"):
+                    p = sizyuk_dir / fn
+                    if p.is_file():
+                        inputs.append(str(p))
+            meta = write_provenance(Path(out_dir) / "meta", config_dict={}, variant=args.absorption_model, extras={"inputs": inputs} if inputs else None)
+            # Write inputs manifest CSV for check-only (portable)
+            if inputs:
+                import csv
+                from hashlib import sha256
+                man = Path(out_dir) / "inputs_manifest.csv"
+                with man.open("w", newline="", encoding="utf-8") as f:
+                    w = csv.writer(f); w.writerow(["path", "exists", "sha256"])
+                    for p in inputs:
+                        pth = Path(p); h = ""
+                        if pth.is_file():
+                            hobj = sha256()
+                            with pth.open("rb") as rf:
+                                for ch in iter(lambda: rf.read(65536), b""):
+                                    hobj.update(ch)
+                            h = hobj.hexdigest()
+                        w.writerow([str(pth), pth.exists(), h])
             return
 
         # Variant dispatch
@@ -83,21 +170,120 @@ def main():
                 from .models.fresnel_model import build as build_variant
             except Exception:
                 from models.fresnel_model import build as build_variant
-        # Build variant
-        build_variant(no_solve=args.no_solve, params_dir=args.params_dir, out_dir=args.out_dir)
+        # Build (and possibly solve) with optional milestone runner
+        if args.emit_milestones:
+            try:
+                from .core.solvers.runner import run as runner_run
+            except Exception:
+                from core.solvers.runner import run as runner_run
+            out_dir_resolved = (args.out_dir or (repo_root / "results")).resolve()
+            mode = "build" if args.no_solve else "solve"
+            if mode == "solve":
+                # Provide a solve_fn to time the solve/export phase separately
+                try:
+                    from .core.build import solve_and_export as core_solve
+                except Exception:
+                    from core.build import solve_and_export as core_solve
+                runner_run(
+                    mode=mode,
+                    build_fn=lambda: build_variant(no_solve=True, params_dir=args.params_dir, out_dir=args.out_dir),
+                    solve_fn=lambda model: core_solve(model, out_dir_resolved, no_solve=False),
+                    out_dir=out_dir_resolved,
+                    meta={"variant": args.absorption_model},
+                )
+            else:
+                runner_run(
+                    mode=mode,
+                    build_fn=lambda: build_variant(no_solve=True, params_dir=args.params_dir, out_dir=args.out_dir),
+                    solve_fn=None,
+                    out_dir=out_dir_resolved,
+                    meta={"variant": args.absorption_model},
+                )
+        else:
+            build_variant(no_solve=args.no_solve, params_dir=args.params_dir, out_dir=args.out_dir)
 
-        # Provenance for full runs
+        # Provenance for full runs (include inputs manifest when possible)
         out_dir = (args.out_dir or (repo_root / "results")).resolve()
-        write_provenance(Path(out_dir) / "meta", config_dict={}, variant=args.absorption_model)
+        inputs = []
+        present_cfgs = [p for p in cfg_paths if p.exists()]
+        if present_cfgs:
+            inputs.extend([str(p) for p in present_cfgs])
+        else:
+            try:
+                from .core.build import resolve_inputs as _resolve_inputs
+            except Exception:
+                from core.build import resolve_inputs as _resolve_inputs
+            try:
+                gp, lp, px = _resolve_inputs(args.params_dir)
+                inputs.extend([str(gp), str(lp), str(px)])
+            except Exception:
+                pass
+        if args.absorption_model == "fresnel":
+            sizyuk_dir = repo_root / "data" / "derived" / "sizyuk"
+            for fn in ("absorptivity_vs_lambda.csv", "reflectivity_vs_lambda.csv", "sizyuk_manifest.json"):
+                p = sizyuk_dir / fn
+                if p.is_file():
+                    inputs.append(str(p))
+        meta = write_provenance(Path(out_dir) / "meta", config_dict={}, variant=args.absorption_model, extras={"inputs": inputs} if inputs else None)
+        # Write CSV manifests for quick browsing (additive; portable)
+        import csv
+        from hashlib import sha256
+        if inputs:
+            man = Path(out_dir) / "inputs_manifest.csv"
+            with man.open("w", newline="", encoding="utf-8") as f:
+                w = csv.writer(f); w.writerow(["path", "exists", "sha256"])
+                for p in inputs:
+                    pth = Path(p); h = ""
+                    if pth.is_file():
+                        hobj = sha256()
+                        with pth.open("rb") as rf:
+                            for ch in iter(lambda: rf.read(65536), b""):
+                                hobj.update(ch)
+                        h = hobj.hexdigest()
+                    w.writerow([str(pth), pth.exists(), h])
+        outs = [
+            out_dir / "pp_model_created.mph",
+            out_dir / "pp_temperature.png",
+            out_dir / "pp_T_vs_time.csv",
+            out_dir / "pp_massloss_vs_time.csv",
+            out_dir / "pp_radius_vs_time.csv",
+            out_dir / "pp_energy_vs_time.csv",
+        ]
+        man_o = Path(out_dir) / "outputs_manifest.csv"
+        with man_o.open("w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f); w.writerow(["path", "exists", "sha256"])
+            for p in outs:
+                pth = Path(p); h = ""
+                if pth.is_file():
+                    hobj = sha256()
+                    with pth.open("rb") as rf:
+                        for ch in iter(lambda: rf.read(65536), b""):
+                            hobj.update(ch)
+                    h = hobj.hexdigest()
+                w.writerow([str(pth), pth.exists(), h])
     except Exception as e:
+        # Map to standardized exit codes when possible
+        try:
+            from src.core.errors import ConfigError, LicenseError, ComsolConnectError, EXIT_CONFIG, EXIT_LICENSE, EXIT_RUNTIME
+        except Exception:
+            from core.errors import ConfigError, LicenseError, ComsolConnectError, EXIT_CONFIG, EXIT_LICENSE, EXIT_RUNTIME
+        code = EXIT_RUNTIME
+        if isinstance(e, (LicenseError, ComsolConnectError)):
+            code = EXIT_LICENSE
+        elif isinstance(e, ConfigError):
+            code = EXIT_CONFIG
         print("\n[ERROR] Build failed:")
         print(f"  {e}\n", file=sys.stderr)
+        # If enhanced errors include a suggested fix, show it
+        fix = getattr(e, "suggested_fix", None)
         print("Hints:")
+        if fix:
+            print(f"  • {fix}")
         print("  • Ensure MPh can find COMSOL (set COMSOL_HOME if needed).")
         print("  • Verify parameter files contain D_drop (or R_drop), X_max, Y_max, etc.")
         print("  • Inline comments with # or // are OK now; the loader strips them.")
         print("  • Run with --params-dir if your files are not next to this script.")
-        sys.exit(1)
+        sys.exit(code)
 
 
 if __name__ == "__main__":

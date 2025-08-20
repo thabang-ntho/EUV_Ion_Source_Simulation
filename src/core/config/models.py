@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, AliasChoices
+from pydantic import BaseModel, Field, AliasChoices, ConfigDict
 from typing import Literal, Optional
 
 
@@ -30,6 +30,13 @@ class Environment(BaseModel):
 
 # Extend as needed for geometry/materials/evaporation/radiation/mesh/outputs
 class RootConfig(BaseModel):
+    """Minimal structured config for additive validation in tests.
+
+    This model is intentionally small and frozen to encourage immutable use.
+    """
+    model_config = ConfigDict(frozen=True)
+
+    schema_version: Optional[str] = Field(default=None, description="Schema version string, if provided")
     simulation: Simulation
     laser: Laser
     absorption: Absorption
