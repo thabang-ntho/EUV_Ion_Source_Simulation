@@ -16,3 +16,5 @@ Guidelines
 Interoperability
 - Ensure pandas-friendly layouts, and provide simple reader utilities under src/io/ if added later.
 
+Future directions
+- Add optional writers (default-off) for Parquet/HDF5 alongside existing CSV/PNG, with a small manifest linking formats. This will remain opt-in and will not change current outputs.

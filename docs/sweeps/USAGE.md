@@ -20,3 +20,4 @@ Notes
 - Default-off; no changes to existing CLI.
 - COMSOL is not invoked here; plan is to orchestrate check-only tasks first.
 - A future process-based runner can wrap this stub with concurrency guards.
+- See `src/core/solvers/sweep_parallel.py` for the stub and planned API.
