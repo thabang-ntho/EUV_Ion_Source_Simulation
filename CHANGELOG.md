@@ -5,6 +5,13 @@ All notable changes to this project will be documented here.
 The project adheres to non-breaking, additive changes by default. Existing CLI
 behavior and physics are preserved unless explicitly marked as opt-in.
 
+## Unreleased (0.13-dev)
+
+Additive scaffolds and developer conveniences:
+- CLI: `--use-adapter` flag to run a minimal MPh adapter smoke and exit (non-breaking).
+- Plugins: explicit registry scaffold with a small example and tests.
+- Config: friendlier schema_version handling with a warning on mismatch.
+
 ## Phase 1 — Architecture & Observability (2025-08-19)
 
 High-impact, low-risk improvements implemented without breaking existing flows.
