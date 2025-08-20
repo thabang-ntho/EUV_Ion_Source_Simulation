@@ -75,7 +75,7 @@ make clean
 
 ## 🛠️ Setup
 
-You can use **uv** (recommended) or plain **pip**.
+You can use the project bootstrap script, **uv** (recommended), or plain **pip**.
 
 ### Option A — uv (Recommended)
 
@@ -107,6 +107,23 @@ source .venv/bin/activate  # On Windows, use `.venv\Scripts\activate`
 pip install -e .
 pip install -r requirements.txt  # only if you cannot use pyproject
 ```
+
+### Option C — Bootstrap (one-liner)
+
+```bash
+# Recommended: keeps the venv active in your shell
+source ./bootstrap.sh
+
+# Variants
+source ./bootstrap.sh --no-tests        # skip pytest
+source ./bootstrap.sh --runtime-only    # install runtime deps only
+source ./bootstrap.sh --no-smoke        # skip CLI smoke checks
+```
+
+The script will:
+- Create/activate `.venv`
+- Install deps (dev or runtime-only)
+- Run tests and optional smoke checks (no COMSOL required)
 
 ---
 
@@ -294,6 +311,69 @@ make test
 make check-fresnel
 make check-kumar
 ```
+
+### Optional: Local pre-push test gate
+
+Enable a fast pre-push gate to catch issues before pushing:
+
+```bash
+git config core.hooksPath .githooks
+chmod +x .githooks/pre-push
+```
+
+Bypass in emergencies:
+
+```bash
+SKIP_PREPUSH=1 git push
+```
+
+### Local vs CI (COMSOL-aware)
+
+Some integration tests require a COMSOL license. These are marked with `@pytest.mark.comsol` and are skipped in CI by default.
+
+Local developer workflow (use the repo virtual env):
+
+```bash
+# Activate project venv (recommended)
+source .venv/bin/activate
+
+# Fast unit tests (uses PYTHONPATH=$PWD in Makefile)
+make test
+
+# COMSOL integration tests (requires license)
+make test-comsol
+
+# Quick build/CLI sanity without COMSOL
+make check-fresnel
+make check-kumar
+```
+
+Notes:
+- If uv warns about hardlinking, set `UV_LINK_MODE=copy` or pass `--link-mode=copy`.
+- If you prefer editable installs: `uv pip install -e .[dev]` inside `.venv`.
+- CI runs in fresh environments and doesn’t require your local COMSOL license.
+
+---
+
+## 🔀 Branching Strategy & CI
+
+Branches:
+- `main` — protected, always green. Merges happen via PR with tests passing and at least one review.
+- `dev` — active development. Feature branches open PRs into `dev`. Small PRs may merge to `dev` directly after tests pass.
+
+CI:
+- GitHub Actions runs tests on pushes and PRs to `main` and `dev` (`.github/workflows/ci.yml`).
+- Use `uv` for fast, reproducible installs.
+
+Contribution flow:
+1. Branch from `dev`: `git checkout -b feature/<short-name>`
+2. Commit changes and push.
+3. Open a PR into `dev`; ensure tests pass.
+4. Periodically open a release PR from `dev` to `main` with version bump and changelog.
+
+Protections:
+- `main`: requires PR review, conversation resolution, no force-push, no deletion.
+- `dev`: requires CI checks (tests, smoke) but no reviews by default. You may push directly or use PRs for visibility.
 
 ## 🧩 Configuration & Validation (new)
 

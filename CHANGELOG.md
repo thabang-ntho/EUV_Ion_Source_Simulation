@@ -30,3 +30,19 @@ Notes
 - No files were moved or renamed in `src/`; Fresnel vs. Kumar split and Sizyuk precompute remain intact.
 - All enhancements are opt-in and default-off; legacy behavior remains the default path.
 
+## 0.1.1 — CI, branching workflow, and docs (2025-08-20)
+
+- Continuous Integration:
+  - Added GitHub Actions workflow `CI` with `tests` and `smoke` jobs (no COMSOL in CI).
+  - Uses `uv` to install and run tests for speed and reproducibility.
+- Branch protections & workflow:
+  - Protected `main` with PR-only merges; `dev` for iterative work.
+  - Enabled auto-delete of merged branches; added CODEOWNERS and PR template.
+- Developer UX:
+  - Introduced `bootstrap.sh` for first-time setup; expanded Makefile (smoke, test-comsol, lint, coverage).
+  - Optional `.githooks/pre-push` to run fast checks locally.
+- Documentation:
+  - README updated with local-vs-CI strategy, COMSOL test marker, and usage notes.
+
+This release is prepared in PR #1 (dev → main) and is non-breaking.
+
