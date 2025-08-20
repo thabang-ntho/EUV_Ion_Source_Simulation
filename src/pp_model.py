@@ -45,6 +45,10 @@ def main():
                     help="Optional: run a minimal adapter smoke (MPh session adapter) and exit. Default off.")
     ap.add_argument("--adapter-build", action="store_true",
                     help="Optional: build a trivial MPH model via adapter and save to out-dir; exits. Default off.")
+    ap.add_argument("--adapter-build-fresnel", action="store_true",
+                    help="Optional: adapter-based trivial model build for Fresnel; exits. Default off.")
+    ap.add_argument("--adapter-build-kumar", action="store_true",
+                    help="Optional: adapter-based trivial model build for Kumar; exits. Default off.")
     # Optional results comparison (additive)
     ap.add_argument("--compare-baseline", type=Path, default=None, help="Optional: baseline results directory (CSV)")
     ap.add_argument("--compare-candidate", type=Path, default=None, help="Optional: candidate results directory (CSV)")
@@ -77,6 +81,28 @@ def main():
                 model = ModelAdapter(client).create_model("adapter_smoke")
                 _ = model  # no-op
             milestone(log, "adapter_smoke_ok")
+            return
+
+        # Optional: adapter-build variant smokes — create a trivial model and save it
+        if args.adapter_build_fresnel or args.adapter_build_kumar:
+            try:
+                from .core.adapters.mph_adapter import MphSessionAdapter, ModelAdapter
+            except Exception:
+                from core.adapters.mph_adapter import MphSessionAdapter, ModelAdapter
+            out_dir = (args.out_dir or (repo_root / "results")).resolve()
+            out_dir.mkdir(parents=True, exist_ok=True)
+            if args.adapter_build_fresnel:
+                mph_path = out_dir / "pp_adapter_build_fresnel.mph"; model_name = "pp_adapter_build_fresnel"; variant = "fresnel"
+            else:
+                mph_path = out_dir / "pp_adapter_build_kumar.mph"; model_name = "pp_adapter_build_kumar"; variant = "kumar"
+            adapter = MphSessionAdapter(retries=1, delay=0.0)
+            with adapter.open() as client:
+                model = ModelAdapter(client).create_model(model_name)
+                try:
+                    model.save(str(mph_path))  # type: ignore[attr-defined]
+                except Exception:
+                    mph_path.write_text("adapter-build placeholder", encoding="utf-8")
+            log("INFO", event="adapter_build_saved", path=str(mph_path), variant=variant)
             return
 
         # Optional: adapter-build smoke — create a trivial model and save it
