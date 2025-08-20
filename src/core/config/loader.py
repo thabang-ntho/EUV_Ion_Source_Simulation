@@ -4,6 +4,7 @@ from typing import Iterable, Dict, Any
 import os
 import hashlib
 import yaml
+import warnings
 from .models import RootConfig
 try:
     # Prefer unified schema version if available
@@ -87,8 +88,22 @@ def load_config(paths: Iterable[Path]) -> RootConfig:
         return _CONFIG_CACHE[composite_key]
 
     # Attach schema version (non-fatal if absent)
-    if "schema_version" not in merged and _SCHEMA_VERSION is not None:
-        merged["schema_version"] = _SCHEMA_VERSION
+    if _SCHEMA_VERSION is not None:
+        # Coerce to string for validation friendliness
+        if "schema_version" in merged:
+            try:
+                merged["schema_version"] = str(merged["schema_version"]).strip()
+            except Exception:
+                pass
+        if "schema_version" not in merged:
+            merged["schema_version"] = _SCHEMA_VERSION
+        else:
+            try:
+                if str(merged["schema_version"]).strip() != str(_SCHEMA_VERSION).strip():
+                    warnings.warn(
+                        f"schema_version mismatch: file has {merged['schema_version']}, expected {_SCHEMA_VERSION}. Proceeding.")
+            except Exception:
+                pass
 
     cfg = RootConfig.model_validate(merged)
 

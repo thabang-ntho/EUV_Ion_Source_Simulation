@@ -43,16 +43,23 @@ It is implemented in **Python** using the [MPh](https://github.com/MPh-py/MPh) w
 
 The following packages are added for future organization (non-breaking, opt-in). See their READMEs for intent and guidelines:
 
-- `src/core/config/` — Pydantic models, loader, factory (structured config)
+- `src/core/config/` — Configuration management (Pydantic models, loader, factory)
 - `src/core/physics/` — Physics modules scaffolding (HT, TDS, SPF, ALE)
 - `src/core/geometry/` — Geometry builder scaffolding
-- `src/core/solvers/` — Solver/study orchestration scaffolding
-- `src/models/` — Existing Fresnel/Kumar variants and ABCs in `base.py`
-- `src/io/` — Future IO helpers (CSV/JSON/Parquet) [scaffold]
+- `src/core/solvers/` — Solver/study orchestration scaffolding (runner)
+- `src/core/adapters/` — Adapters layer isolating MPh/COMSOL (scaffold)
+- `src/models/` — Existing Fresnel/Kumar variants; ABCs in `base.py`; simple plugin `registry.py`
+- `src/io/` — IO helpers (CSV/JSON/Parquet) and compare CLI [scaffold]
 - `src/validation/` — Additional validators beyond Pydantic [scaffold]
 - `src/visualization/` — Shared plotting utilities [scaffold]
 
 These are additive only; current entry points and physics remain unchanged by default.
+
+Interfaces (Phase 2 scaffolds)
+- ABCs: AbsorptionModel, PhysicsVariant, Solver, SessionIface (future adapters)
+- Adapters: `core/adapters/mph_adapter.py` with MphSessionAdapter + ModelAdapter (mockable)
+- Plugins: explicit registry in `models/registry.py` (opt-in; not used by defaults)
+- Async/parallel: deferred; consider process-based sweep runner in Phase 3
 
 ---
 

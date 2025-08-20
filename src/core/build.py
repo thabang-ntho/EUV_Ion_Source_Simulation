@@ -438,6 +438,10 @@ def build_model(no_solve: bool, params_dir: Optional[Path], out_dir: Optional[Pa
     dataE = exports.create("Table", name="E csv"); dataE.property("sourceobject", tables / "energy_vs_time"); dataE.property("filename", str(out_dir / "pp_energy_vs_time.csv"))
 
     model.save(str(OUT_MPH))
+    try:
+        milestone(log, "mph_saved", path=str(OUT_MPH))
+    except Exception:
+        pass
     if not no_solve:
         sol.java.run(); img.java.run(); dataT.java.run(); dataM.java.run(); dataR.java.run(); dataE.java.run(); model.save(str(OUT_MPH))
 
