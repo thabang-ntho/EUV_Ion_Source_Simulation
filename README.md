@@ -138,6 +138,9 @@ uv run python src/pp_model.py --no-solve
 # Build-only COMSOL smoke (writes .mph; requires local COMSOL)
 uv run python src/pp_model.py --no-solve --emit-milestones --absorption-model fresnel
 uv run python src/pp_model.py --no-solve --emit-milestones --absorption-model kumar
+
+# Adapter smoke (opens MPh session via adapter and exits)
+uv run python src/pp_model.py --use-adapter
 ```
 
 ### Fresnel Precompute (Sizyuk)
