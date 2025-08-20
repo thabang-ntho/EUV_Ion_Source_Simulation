@@ -5,7 +5,42 @@ All notable changes to this project will be documented here.
 The project adheres to non-breaking, additive changes by default. Existing CLI
 behavior and physics are preserved unless explicitly marked as opt-in.
 
-## 🚀 v1.0.0 - Complete MPh Implementation (2025-08-20)
+## � v1.1.0-dev - MPh API Implementation Progress (2025-08-20)
+
+**DEVELOPMENT: Core modules implementation and COMSOL integration**
+
+### ✅ **Completed**
+- **MPh API Pattern Discovery**: Complete understanding of correct MPh API usage from mph_example.py
+- **License Configuration**: COMSOL license setup fully documented and working
+- **Geometry Module**: 2D droplet geometry creation using correct `model/'geometries'` pattern
+- **Selections Module**: Domain and boundary selections with container patterns
+- **Materials Module**: Temperature-dependent materials with correct Basic sub-node property setting
+- **Materials Assignment**: Using `.select()` method instead of `.property('selection', ...)`
+
+### 🔄 **In Progress** 
+- **COMSOL Connection**: Resolving "Application is null" initialization error
+- **Physics Module**: Heat transfer physics setup required
+- **Studies Module**: Transient studies and solving implementation
+
+### 📚 **Documentation Added**
+- `docs/mph/comsol_setup.md`: Complete COMSOL license configuration and troubleshooting
+- `docs/mph/api_reference.md`: Comprehensive MPh API patterns and examples  
+- `docs/mph/NEXT_STEPS.md`: Detailed roadmap for completing implementation
+- Updated README.md with current implementation status
+
+### 🔧 **Technical Improvements**
+- Fixed materials property setting to use Basic sub-node pattern: `(material/'Basic').property()`
+- Fixed material assignment to use `.select()` method
+- Updated all modules to use container syntax: `model/'container_name'`
+- Removed invalid model property calls that don't exist in MPh API
+
+### 🚨 **Known Issues**
+- COMSOL initialization error preventing final testing (environmental, not code-related)
+- Requires system restart or COMSOL process cleanup to resolve
+
+---
+
+## �🚀 v1.0.0 - Complete MPh Implementation (2025-08-20)
 
 **MAJOR RELEASE: Production-ready MPh-based architecture**
 

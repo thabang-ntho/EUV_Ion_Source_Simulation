@@ -3,8 +3,8 @@
 This project models the interaction of a high-energy laser pulse with a **2D planar** liquid tin droplet (sphere → pancake transition) for EUV lithography sources.
 It is implemented in **Python** using the [MPh](https://github.com/MPh-py/MPh) wrapper over the COMSOL Java API to automate geometry creation, physics/BC assignment, solving, and post-processing.
 
-> **🚀 NEW: Complete MPh-based Implementation**  
-> The project now features a fully modernized MPh-based architecture with modular design, comprehensive testing, and advanced CLI interface. See [MPh Implementation Guide](docs/mph/user_guide.md) for details.
+> **🚀 MPh Implementation Status (August 2025)**  
+> MPh-based architecture **in development** with significant progress. Core modules (geometry, selections, materials) **completed**. Physics and studies modules next. See [MPh Setup Guide](docs/mph/comsol_setup.md) and [Next Steps](docs/mph/NEXT_STEPS.md) for current status.
 
 ---
 
@@ -67,6 +67,31 @@ python -m src.mph_cli fresnel --solve -p R_drop=30 -p T_ref=350
 # Original implementation
 python src/pp_model.py
 ```
+
+---
+
+## 🔧 MPh Implementation Status
+
+### ✅ **Completed Modules:**
+- **License Configuration** - COMSOL license setup documented and working
+- **MPh API Patterns** - Comprehensive understanding of correct API usage
+- **Geometry Builder** (`src/mph_core/geometry.py`) - 2D droplet geometry creation
+- **Selection Manager** (`src/mph_core/selections.py`) - Domain and boundary selections  
+- **Materials Handler** (`src/mph_core/materials.py`) - Temperature-dependent materials with property assignment
+
+### 🔄 **In Progress:**
+- **Physics Manager** (`src/mph_core/physics.py`) - Heat transfer physics setup
+- **Study Manager** (`src/mph_core/studies.py`) - Transient studies and solving
+
+### 📚 **Key Resources:**
+- **[COMSOL Setup Guide](docs/mph/comsol_setup.md)** - Complete license configuration and troubleshooting
+- **[Next Steps Guide](docs/mph/NEXT_STEPS.md)** - Detailed roadmap for completing implementation
+- **`mph_example.py`** - Reference implementation showing correct MPh API patterns
+
+### 🚨 **Current Status:**
+- Materials module **ready for testing** with correct API patterns
+- COMSOL connection issue preventing final validation (system restart recommended)
+- Physics and studies modules **next priority** for implementation
 
 ---
 

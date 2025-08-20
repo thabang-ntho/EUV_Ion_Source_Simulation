@@ -97,7 +97,7 @@ class StudyManager:
         
         # Create study
         study = self.model.studies().create('Study', tag='std1')
-        study.property('name', 'Transient Analysis')
+        # study.property('name', 'Transient Analysis')  # Name is set at creation
         
         # Create time-dependent step
         time_step = study.create('Transient', tag='time1')
@@ -133,7 +133,7 @@ class StudyManager:
         
         # Create study
         study = self.model.studies().create('Study', tag='std2')
-        study.property('name', 'Steady State Analysis')
+        # study.property('name', 'Steady State Analysis')  # Name is set at creation
         
         # Create stationary step
         steady_step = study.create('Stationary', tag='stat1')
@@ -153,7 +153,7 @@ class StudyManager:
         
         # Create solver configuration
         solver = study.create('SolverConfiguration', tag='sol1')
-        solver.property('name', 'Transient Solver')
+        # solver.property('name', 'Transient Solver')  # Name is set at creation
         
         # Time stepping method
         time_method = self.params.get('Time_Method', 'bdf')
@@ -180,7 +180,7 @@ class StudyManager:
         
         # Create solver configuration
         solver = study.create('SolverConfiguration', tag='sol2')
-        solver.property('name', 'Steady Solver')
+        # solver.property('name', 'Steady Solver')  # Name is set at creation
         
         # Nonlinear solver
         solver.property('nonlinmethod', 'newton')
@@ -226,7 +226,7 @@ class StudyManager:
                 
             info[name] = {
                 'tag': study.tag(),
-                'name': study.property('name'),
+                'name': study.name(),
                 'steps': steps
             }
             

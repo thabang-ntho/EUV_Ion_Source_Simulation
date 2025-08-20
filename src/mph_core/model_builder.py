@@ -158,15 +158,11 @@ class ModelBuilder:
         model_name = f"EUV_Droplet_{self.variant.title()}"
         self.model = self.client.create(model_name)
         
-        # Set model properties
-        self.model.property('name', model_name)
-        self.model.property('comments', f'EUV droplet simulation using {self.variant} approach')
-        
-        # Set coordinate system
-        self.model.coordinate('Cartesian')
+        # Model is created, no need to set name property as it's already set
+        logger.info(f"Model '{model_name}' created successfully")
         
         # Set geometry space dimension
-        self.model.property('geom_space_dim', 2)  # 2D model
+        # Note: 2D geometry will be set up in geometry builder
         
         self.build_stages['model_created'] = True
         logger.info(f"Created model: {model_name}")
@@ -206,7 +202,7 @@ class ModelBuilder:
             raise ValueError("Invalid geometry parameters")
             
         # Create geometry
-        self.geometry_builder.create_domain()
+        self.geometry_builder.create_geometry(self.model)
         
         self.build_stages['geometry_built'] = True
         logger.info("Geometry built successfully")
@@ -215,7 +211,7 @@ class ModelBuilder:
         """Create named selections"""
         logger.info("Creating selections")
         
-        self.selection_manager = SelectionManager(self.model, self.geometry_builder)
+        self.selection_manager = SelectionManager(self.model, self.geometry_builder, self.params)
         
         # Create all selections
         selections = self.selection_manager.create_all_selections()
@@ -328,7 +324,7 @@ class ModelBuilder:
         info = {
             'variant': self.variant,
             'build_status': self.get_build_status(),
-            'model_name': self.model.property('name') if self.model else None
+            'model_name': self.model.name() if self.model else None
         }
         
         # Add component info if available

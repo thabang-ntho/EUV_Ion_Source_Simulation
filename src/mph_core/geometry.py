@@ -50,39 +50,43 @@ class GeometryBuilder:
             droplet_center_y=self.params.get('Droplet_Center_Y', 0.0)
         )
     
-    def create_domain(self) -> None:
-        """
-        Create rectangular domain with circular droplet
+    def create_geometry(self, model) -> None:
+        """Create 2D droplet geometry using MPh API"""
+        logger.info("Creating 2D droplet geometry")
         
-        Uses high-level MPh geometry.create() API instead of Java calls
-        """
-        logger.info("Creating geometry domain with MPh API")
+        # Access geometries container and create a 2D geometry
+        geometries = model/'geometries'
+        self.geometry = geometries.create(2, name='geometry')
         
-        # Get geometry node from model
-        self.geometry = self.model.geometry()
+        # Create domain rectangle
+        domain = self.geometry.create('Rectangle', name='domain')
+        domain.property('size', [f"{self.params['X_max']*2}[um]", f"{self.params['Y_max']*2}[um]"])
+        domain.property('pos', ['0', '0'])
         
-        # Create rectangular domain
-        domain_rect = self.geometry.create('Rectangle', tag='domain_rect')
-        domain_rect.property('width', self.geom_params.domain_width)
-        domain_rect.property('height', self.geom_params.domain_height) 
-        domain_rect.property('pos', [
-            -self.geom_params.domain_width/2,
-            -self.geom_params.domain_height/2
-        ])
-        
-        # Create circular droplet
-        droplet_circle = self.geometry.create('Circle', tag='droplet_circle')
-        droplet_circle.property('r', self.geom_params.droplet_radius)
-        droplet_circle.property('pos', [
-            self.geom_params.droplet_center_x,
-            self.geom_params.droplet_center_y
-        ])
+        # Create droplet circle
+        droplet = self.geometry.create('Circle', name='droplet')
+        droplet.property('r', f"{self.params['R_drop']}[um]")
+        droplet.property('pos', [f"{self.params['X_max']}[um]", f"{self.params['Y_max']}[um]"])
         
         # Build geometry
-        self.geometry.run()
+        model.build(self.geometry)
+        logger.info("Geometry built successfully")
+    
+    def create_mesh(self, model) -> None:
+        """Create mesh using MPh API"""
+        logger.info("Creating mesh")
         
-        logger.info(f"Created domain: {self.geom_params.domain_width:.2e} x {self.geom_params.domain_height:.2e}")
-        logger.info(f"Created droplet: radius={self.geom_params.droplet_radius:.2e}")
+        # Access mesh container
+        meshes = model/'meshes'
+        mesh = meshes.create(self.geometry, name='mesh')
+        
+        # Configure mesh size
+        size = mesh.create('Size', name='size')
+        size.property('hauto', 3)  # Finer mesh
+        
+        # Build mesh
+        model.build(mesh)
+        logger.info("Mesh created successfully")
         
     def get_domain_info(self) -> Dict[str, Any]:
         """Get domain geometry information"""
