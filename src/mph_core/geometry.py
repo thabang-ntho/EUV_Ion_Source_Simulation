@@ -58,20 +58,20 @@ class GeometryBuilder:
         """
         logger.info("Creating geometry domain with MPh API")
         
-        # Get geometry node from model
-        self.geometry = self.model.geometry()
+        # Get geometry container from model and create geometry
+        geometries = self.model/'geometries'
+        self.geometry = geometries.create(2, name='geom1')  # 2D geometry
         
         # Create rectangular domain
-        domain_rect = self.geometry.create('Rectangle', tag='domain_rect')
-        domain_rect.property('width', self.geom_params.domain_width)
-        domain_rect.property('height', self.geom_params.domain_height) 
+        domain_rect = self.geometry.create('Rectangle', name='domain_rect')
+        domain_rect.property('size', [self.geom_params.domain_width, self.geom_params.domain_height])
         domain_rect.property('pos', [
             -self.geom_params.domain_width/2,
             -self.geom_params.domain_height/2
         ])
         
         # Create circular droplet
-        droplet_circle = self.geometry.create('Circle', tag='droplet_circle')
+        droplet_circle = self.geometry.create('Circle', name='droplet_circle')
         droplet_circle.property('r', self.geom_params.droplet_radius)
         droplet_circle.property('pos', [
             self.geom_params.droplet_center_x,
@@ -79,7 +79,7 @@ class GeometryBuilder:
         ])
         
         # Build geometry
-        self.geometry.run()
+        self.model.build(self.geometry)
         
         logger.info(f"Created domain: {self.geom_params.domain_width:.2e} x {self.geom_params.domain_height:.2e}")
         logger.info(f"Created droplet: radius={self.geom_params.droplet_radius:.2e}")

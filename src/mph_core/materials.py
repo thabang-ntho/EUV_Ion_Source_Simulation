@@ -2,10 +2,19 @@
 Materials Handler Module
 
 High-level material property management using MPh API.
-Replaces low-level Java material calls with pythonic materials.create() patterns.
-"""
-
-from typing import Dict, Any, Optional
+Replaces low-level Java material calls with pythonic materials.create() pat    def assign_materials_to_domains(self, selections: Dict[str, Any]) -> None:
+        """Assign materials to geometric domains"""
+        logger.info("Assigning materials to domains")
+        
+        # Assign tin to droplet domain
+        if 'tin' in self.materials and 's_drop' in selections:
+            self.materials['tin'].select(selections['s_drop'])
+            logger.info("Assigned tin material to droplet domain")
+            
+        # Assign gas to gas domain (if gas material exists)
+        if 'gas' in self.materials and 's_gas' in selections:
+            self.materials['gas'].select(selections['s_gas'])
+            logger.info("Assigned gas material to gas domain")rom typing import Dict, Any, Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -50,24 +59,43 @@ class MaterialsHandler:
         """Create tin material with temperature-dependent properties"""
         logger.info("Creating tin material")
         
-        # Create tin material
-        tin = self.model.materials().create('Material', tag='tin')
-        tin.property('name', 'Tin')
+        # Get materials container and create tin material
+        materials_container = self.model/'materials'
+        tin = materials_container.create('Common', name='tin')
         
-        # Basic properties
-        tin.property('family', 'metal')
+        # Get basic properties section
+        basic = tin/'Basic'
         
-        # Density (temperature dependent)
-        rho_solid = self.params.get('Tin_Density_Solid', 7310)  # kg/m³
-        rho_liquid = self.params.get('Tin_Density_Liquid', 6990)  # kg/m³
-        T_melt = self.params.get('Tin_Melting_Temperature', 505.08)  # K
+        # Density (use constant values for now, can be made temperature dependent later)
+        rho_liquid = self.params.get('rho_sn', '6980[kg/m^3]')
+        if isinstance(rho_liquid, str):
+            basic.property('density', rho_liquid)
+        else:
+            basic.property('density', f'{rho_liquid}[kg/m^3]')
         
-        # Use piecewise function for density
-        rho_expr = f"if(T<{T_melt}[K], {rho_solid}[kg/m^3], {rho_liquid}[kg/m^3])"
-        tin.property('rho', rho_expr)
+        # Thermal conductivity
+        k_liquid = self.params.get('k_sn', '31[W/(m*K)]')
+        if isinstance(k_liquid, str):
+            basic.property('thermalconductivity', k_liquid)
+        else:
+            basic.property('thermalconductivity', f'{k_liquid}[W/(m*K)]')
         
-        # Thermal conductivity (temperature dependent)
-        k_solid = self.params.get('Tin_Thermal_Conductivity_Solid', 66.8)  # W/(m·K)
+        # Heat capacity
+        cp_liquid = self.params.get('Cp_sn', '237[J/(kg*K)]')
+        if isinstance(cp_liquid, str):
+            basic.property('heatcapacity', cp_liquid)
+        else:
+            basic.property('heatcapacity', f'{cp_liquid}[J/(kg*K)]')
+        
+        # Dynamic viscosity (for flow physics)
+        mu_liquid = self.params.get('mu_sn', '1.8e-3[Pa*s]')
+        if isinstance(mu_liquid, str):
+            basic.property('dynamicviscosity', mu_liquid)
+        else:
+            basic.property('dynamicviscosity', f'{mu_liquid}[Pa*s]')
+        
+        logger.info("Created tin material with basic properties")
+        return tin
         k_liquid = self.params.get('Tin_Thermal_Conductivity_Liquid', 32.0)  # W/(m·K)
         k_expr = f"if(T<{T_melt}[K], {k_solid}[W/(m*K)], {k_liquid}[W/(m*K)])"
         tin.property('k', k_expr)
@@ -145,11 +173,13 @@ class MaterialsHandler:
         
         # Assign tin to droplet domain
         if 'tin' in self.materials and 's_drop' in selections:
-            self.materials['tin'].property('selection', selections['s_drop'])
+            self.materials['tin'].select(selections['s_drop'])
             logger.info("Assigned tin material to droplet domain")
             
-        # Assign gas to gas domain
+        # Assign gas to gas domain (if gas material exists)
         if 'gas' in self.materials and 's_gas' in selections:
+            self.materials['gas'].select(selections['s_gas'])
+            logger.info("Assigned gas material to gas domain")
             self.materials['gas'].property('selection', selections['s_gas'])
             logger.info("Assigned gas material to gas domain")
     

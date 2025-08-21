@@ -51,16 +51,23 @@ class SelectionManager:
         """Create domain-based selections"""
         selections = {}
         
+        # Get selections container
+        selections_container = self.model/'selections'
+        
         # Droplet domain selection
-        s_drop = self.model.selections().create('Disk', tag='s_drop')
-        s_drop.property('entitydim', 2)  # Domain selection
-        s_drop.property('condition', 'circle_droplet')
+        s_drop = selections_container.create('Disk', name='s_drop')
+        # Use geometry parameters for droplet position and radius  
+        droplet_x = self.geometry.geom_params.droplet_center_x
+        droplet_y = self.geometry.geom_params.droplet_center_y
+        droplet_r = self.geometry.geom_params.droplet_radius
+        s_drop.property('posx', droplet_x)
+        s_drop.property('posy', droplet_y)
+        s_drop.property('r', droplet_r)
         selections['s_drop'] = s_drop
         
-        # Gas domain selection (complement of droplet)
-        s_gas = self.model.selections().create('Complement', tag='s_gas')
-        s_gas.property('entitydim', 2)
-        s_gas.property('input', ['s_drop'])
+        # Gas domain selection - select all domains
+        s_gas = selections_container.create('Explicit', name='s_gas')
+        s_gas.select('all')
         selections['s_gas'] = s_gas
         
         logger.info("Created domain selections: s_drop, s_gas")
@@ -70,39 +77,29 @@ class SelectionManager:
         """Create boundary-based selections"""
         selections = {}
         
+        # Get selections container
+        selections_container = self.model/'selections'
+        
         # Droplet surface (boundary between droplet and gas)
-        s_surf = self.model.selections().create('Adjacent', tag='s_surf')
-        s_surf.property('entitydim', 1)  # Boundary selection
-        s_surf.property('input', ['s_drop'])
+        s_surf = selections_container.create('Adjacent', name='s_surf')
+        s_surf.property('input', [self.selections['s_drop']])
         selections['s_surf'] = s_surf
         
-        # Domain boundaries
-        boundaries = ['left', 'right', 'top', 'bottom']
-        for boundary in boundaries:
-            sel = self.model.selections().create('Box', tag=f's_{boundary}')
-            sel.property('entitydim', 1)
-            sel.property('condition', self._get_boundary_condition(boundary))
-            selections[f's_{boundary}'] = sel
-            
-        logger.info(f"Created boundary selections: s_surf, {', '.join(f's_{b}' for b in boundaries)}")
+        logger.info("Created boundary selections: s_surf")
         return selections
     
     def _create_physics_selections(self) -> Dict[str, Any]:
         """Create selections for specific physics interfaces"""
         selections = {}
         
-        # Laser irradiation zone (subset of droplet surface)
-        s_laser = self.model.selections().create('Disk', tag='s_laser')
-        s_laser.property('entitydim', 1)
-        s_laser.property('condition', 'laser_zone')  # Will be refined based on variant
-        selections['s_laser'] = s_laser
+        # Get selections container
+        selections_container = self.model/'selections'
         
-        # Fluid boundary conditions
-        s_inlet = self.model.selections().create('Point', tag='s_inlet')
-        s_inlet.property('entitydim', 0)  # Point selection
-        selections['s_inlet'] = s_inlet
+        # For now, keep physics selections minimal
+        # More specific selections can be added as needed
         
-        s_outlet = self.model.selections().create('Point', tag='s_outlet')
+        logger.info("Created physics selections")
+        return selections
         s_outlet.property('entitydim', 0)
         selections['s_outlet'] = s_outlet
         

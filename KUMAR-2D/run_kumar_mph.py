@@ -16,12 +16,15 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 import os
+import sys
 import logging
 
-from src.mph_core.model_builder import ModelBuilder
-
-
+# Add the project root to Python path
 THIS_DIR = Path(__file__).resolve().parent
+ROOT_DIR = THIS_DIR.parent
+sys.path.insert(0, str(ROOT_DIR))
+
+from src.mph_core.model_builder import ModelBuilder
 
 
 def parse_param_file(p: Path) -> dict[str, str]:
@@ -80,8 +83,16 @@ def main(argv: list[str] | None = None) -> int:
         logging.info("Planned steps: connect→create model→geometry→selections→materials→physics(Kumar)→studies→save .mph")
         return 0
 
+    # Set environment variables for COMSOL connection if provided
+    if args.host:
+        os.environ['COMSOL_HOST'] = args.host
+    if args.port:
+        os.environ['COMSOL_PORT'] = str(args.port)
+    if args.cores:
+        os.environ['COMSOL_CORES'] = str(args.cores)
+
     # Build via mph_core ModelBuilder
-    builder = ModelBuilder(flat_params, 'kumar', host=args.host, port=args.port, cores=args.cores)
+    builder = ModelBuilder(flat_params, 'kumar')
 
     # Execute staged build to allow for Kumar-specific hooks later if desired
     builder._connect_to_comsol()

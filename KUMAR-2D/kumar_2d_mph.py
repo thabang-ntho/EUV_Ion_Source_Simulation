@@ -1,7 +1,11 @@
 """
 Kumar 2D Demo — Direct MPh Translation (container API), aligned with mph_example.py
 
-This script translates the COMSOL-exported Java model to MPh Python code using
+This script transl        var_psat.property('Psat', 'P_ref*exp( Lv_sn*M_sn/R_gas*(1/Tboil_sn - 1/T) )')
+        
+        # Evaporation flux variable
+        var_jevap = variables.create(name='J_evap')
+        var_jevap.property('J_evap', '(1-beta_r)*Psat*sqrt(M_sn/(2*pi*R_gas*T))')the COMSOL-exported Java model to MPh Python code using
 the container pattern (model/'container') and features known from mph_example.py.
 
 It reads parameters from KUMAR-2D/parameters.txt, builds geometry, functions,
@@ -65,6 +69,10 @@ def build_model(params: dict, out_path: Path, solve: bool = False) -> None:
         # Parameters (assign strings with units/expressions)
         for k, v in params.items():
             model.parameter(k, v)
+            
+        # Add universal constants needed for physics
+        model.parameter('R_gas', '8.314[J/(mol*K)]')  # Universal gas constant
+        model.parameter('Lv_mol', 'Lv_sn*M_sn')  # Latent heat per mole
 
         # Containers
         functions = model/'functions'
@@ -77,6 +85,22 @@ def build_model(params: dict, out_path: Path, solve: bool = False) -> None:
         physics = model/'physics'
         studies = model/'studies'
         solutions = model/'solutions'
+
+        # Geometry: rectangle (vacuum domain) + circle (droplet)
+        # Set length unit to micrometers (crucial for proper scaling)
+        geometry.java.lengthUnit("µm")
+        
+        # Rectangle for vacuum domain
+        rect = geometry.create('Rectangle', name='r1')
+        rect.property('size', [params['W_dom'], params['H_dom']])
+        
+        # Circle for droplet at center
+        circle = geometry.create('Circle', name='c1') 
+        circle.property('pos', [f"{params['W_dom']}/2", f"{params['H_dom']}/2"])
+        circle.property('r', params['R_drop'])
+        
+        # Build geometry
+        model.build(geometry)
 
         # Functions: pulse step, gaussian space factor, surface tension sigma(T)
         step = functions.create('Step', name='pulse')
@@ -95,6 +119,17 @@ def build_model(params: dict, out_path: Path, solve: bool = False) -> None:
         sigma_fn.property('funcname', 'sigma')
         sigma_fn.property('expr', 'sigma_f + d_sigma_dT*(T - Tmelt_sn)')
         sigma_fn.property('args', ['T'])
+
+        # Variables for saturation pressure and evaporation
+        variables = model/'variables'
+        
+        # Saturation pressure variable
+        var_psat = variables.create(name='psat_var')
+        var_psat.property('Psat', 'P_ref*exp( Lv_sn*M_sn/R_const*(1/Tboil_sn - 1/T) )')
+        
+        # Evaporation flux variable  
+        var_jevap = variables.create(name='evap_var')
+        var_jevap.property('J_evap', '(1-beta_r)*Psat*sqrt(M_sn/(2*pi*R_const*T))')
 
         # Geometry: rectangle (vacuum box) and circle (droplet)
         rect = geometry.create('Rectangle', name='vac_box')
@@ -129,7 +164,7 @@ def build_model(params: dict, out_path: Path, solve: bool = False) -> None:
             basic.property('heatcapacity', params['Cp_sn'])
         tin.select(s_drop)
 
-        # Physics: Heat Transfer (HT) and Single Phase Flow (SPF)
+        # Physics: Heat Transfer (HT) and Laminar Flow (SPF)
         ht = physics.create('HeatTransfer', geometry, name='ht')
         ht.select(s_gas)  # include entire domain; tin material applied in region
         # Add volumetric heat source feature using q_laser expr
@@ -137,15 +172,46 @@ def build_model(params: dict, out_path: Path, solve: bool = False) -> None:
         q_expr = '(2*a_abs*P_laser)/(pi*Rl_spot^2)*exp(-2*((x - x0)^2 + (y - y0)^2)/Rl_spot^2)*pulse(t)/1[s]'
         htqs.property('Q0', q_expr)
 
-        spf = physics.create('SinglePhaseFlow', geometry, name='spf')
+        # First laminar flow for droplet with Marangoni stress
+        spf = physics.create('LaminarFlow', geometry, name='spf')
         spf.select(s_drop)
-        # Default no-slip walls implicit; surface tension and Marangoni would be added via dedicated features if needed
+        
+        # Add Marangoni boundary stress on droplet surface
+        bs_marangoni = spf.create('BoundaryStress', 1, name='marangoni_stress')
+        bs_marangoni.select(s_surf)
+        # Marangoni stress expression: -d_sigma_dT * grad(T) x n
+        bs_marangoni.property('Fbnd', [
+            ['-d_sigma_dT*(Ty*nx - Tx*ny)*(-ny)'],
+            ['-d_sigma_dT*(Ty*nx - Tx*ny)*nx'],
+            ['0']
+        ])
+        
+        # Second laminar flow for recoil pressure
+        spf2 = physics.create('LaminarFlow', geometry, name='spf2')
+        spf2.select(s_drop)
+        
+        # Add recoil pressure boundary condition
+        bs_recoil = spf2.create('BoundaryStress', 1, name='recoil_pressure')
+        bs_recoil.select(s_surf)
+        bs_recoil.property('BoundaryCondition', 'NormalStress')
+        bs_recoil.property('f0', '-(1+beta_r/2)*Psat')
+        
+        # Transport of Diluted Species for evaporation
+        tds = physics.create('DilutedSpecies', geometry, name='tds')
+        tds.select(s_drop)
+        
+        # Add evaporation flux boundary condition on droplet surface
+        flux_evap = tds.create('FluxBoundary', 1, name='evaporation_flux')
+        flux_evap.select(s_surf)
+        flux_evap.property('IncludeConvection', True)
+        flux_evap.property('species', True)
+        flux_evap.property('J0', 'J_evap / M_sn')
 
         # Mesh
         mesh = meshes.create(geometry, name='mesh1')
         size = mesh.create('Size', name='size')
         size.property('hauto', 3)
-        model.build(mesh)
+        # Build the mesh (no model.build() call needed for mesh)
 
         # Study: Transient
         study = studies.create(name='transient')
@@ -158,6 +224,8 @@ def build_model(params: dict, out_path: Path, solve: bool = False) -> None:
         step.property('activate', [
             physics/'ht', 'on',
             physics/'spf', 'on',
+            physics/'spf2', 'on',
+            physics/'tds', 'on',
             'frame:spatial1', 'on',
             'frame:material1', 'on',
         ])
@@ -176,7 +244,7 @@ def build_model(params: dict, out_path: Path, solve: bool = False) -> None:
         model.save(str(out_path))
 
         if solve:
-            study.solve()
+            study.run()
             # Export a simple temperature plot
             plots = model/'results'
             pg = plots.create('PlotGroup2D', name='temperature')
