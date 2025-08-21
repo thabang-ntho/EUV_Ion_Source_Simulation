@@ -1,6 +1,6 @@
 PYTHON := python
 
-.PHONY: install install-dev test test-comsol check-fresnel check-kumar smoke provenance lint lint-docs test-cov clean
+.PHONY: install install-dev test test-comsol lint lint-docs test-cov clean mph-check mph-solve mph-dry-run comsol-smoke
 
 install:
 	uv pip install -e .
@@ -14,17 +14,19 @@ test:
 test-comsol:
 	RUN_COMSOL=1 PYTHONPATH=$$(pwd) uv run pytest -m comsol -q
 
-check-fresnel:
-	uv run python src/pp_model.py --check-only --absorption-model fresnel
+mph-check:
+	. scripts/setup_comsol_env.sh >/dev/null 2>&1 || true; \
+	uv run python -m src.cli.mph_runner --check-only --variant fresnel --log-level INFO
 
-check-kumar:
-	uv run python src/pp_model.py --check-only --absorption-model kumar
+mph-solve:
+	. scripts/setup_comsol_env.sh >/dev/null 2>&1 || true; \
+	uv run python -m src.cli.mph_runner --solve --variant fresnel --log-level INFO
 
-smoke: check-fresnel check-kumar
-	@echo "Smoke checks completed."
+mph-dry-run:
+	uv run python -m src.cli.mph_runner --dry-run --variant fresnel --config data/config.yaml --log-level INFO
 
-provenance:
-	LOG_LEVEL=INFO uv run python src/pp_model.py --check-only
+comsol-smoke:
+	RUN_COMSOL=1 PYTHONPATH=$$(pwd) uv run pytest -q tests/test_comsol_euv_mph_smoke.py
 
 lint:
 	@command -v ruff >/dev/null 2>&1 && ruff check . || \

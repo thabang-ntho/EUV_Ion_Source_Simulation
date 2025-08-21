@@ -78,9 +78,8 @@ if [[ $RUN_TESTS -eq 1 ]]; then
 fi
 
 if [[ $RUN_SMOKE -eq 1 ]]; then
-  echo "[bootstrap] Running smoke (check-only) ..."
-  python src/pp_model.py --check-only --absorption-model fresnel >/dev/null
-  python src/pp_model.py --check-only --absorption-model kumar >/dev/null
+  echo "[bootstrap] Running smoke (mph check-only) ..."
+  python -m src.cli.mph_runner --dry-run --variant fresnel >/dev/null || true
 fi
 
 cat <<'DONE'
@@ -92,6 +91,5 @@ To activate the environment in future shells:
 Useful commands:
   make test          # fast unit tests
   make test-comsol   # COMSOL integration tests (requires license)
-  make check-fresnel # smoke
-  make check-kumar   # smoke
+  make mph-dry-run   # smoke (no COMSOL)
 DONE

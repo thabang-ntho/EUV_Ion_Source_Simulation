@@ -62,11 +62,8 @@ python -m src.mph_cli fresnel --dry-run
 python -m src.mph_cli fresnel --solve -p R_drop=30 -p T_ref=350
 ```
 
-#### Legacy Interface (Still Available)
-```bash
-# Original implementation
-python src/pp_model.py
-```
+#### Legacy Interface
+The legacy pp_model CLI has been removed in mph_dev/main. Use the modern `euv-mph` runner.
 
 ---
 
@@ -173,29 +170,23 @@ pip install -r requirements.txt  # only if you cannot use pyproject
 
 ---
 
-## 🚀 Running the Simulation
+## 🚀 Running the Simulation (MPh)
 
 ```bash
-# Run with uv (Fresnel, default)
-uv run python src/pp_model.py --absorption-model fresnel
+# 0) Dry-run (no COMSOL)
+python -m src.cli.mph_runner --dry-run --variant fresnel --config data/config.yaml
 
-# Kumar variant (paper-faithful BCs/sources)
-uv run python src/pp_model.py --absorption-model kumar
+# 1) Prepare COMSOL env (local install)
+source scripts/setup_comsol_env.sh
 
-# Validate only (schema + geometry sanity) without COMSOL
-uv run python src/pp_model.py --check-only
+# Build-only (no solve)
+python -m src.cli.mph_runner --check-only --variant fresnel
 
-# Use custom dirs
-uv run python src/pp_model.py --params-dir ./data --out-dir ./results
+# Solve (requires server)
+python -m src.cli.mph_runner --solve --variant fresnel --host 127.0.0.1 --port 2036
 
-# Build-only (no solve): generate the .mph model
-uv run python src/pp_model.py --no-solve
-
-# Build-only COMSOL smoke (writes .mph; requires local COMSOL)
-uv run python src/pp_model.py --no-solve --emit-milestones --absorption-model fresnel
-uv run python src/pp_model.py --no-solve --emit-milestones --absorption-model kumar
-
-# Adapter smokes are for developers; see `docs/models.md` and `docs/advanced_cli.md` for details.
+# Custom output and config
+python -m src.cli.mph_runner --check-only --variant kumar --output results/kumar_run.mph --config data/config.yaml
 ```
 
 ### Fresnel Precompute (Sizyuk)
