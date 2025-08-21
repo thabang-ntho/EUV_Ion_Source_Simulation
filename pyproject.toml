@@ -33,6 +33,5 @@ packages = ["src"]
 addopts = "-q"
 
 [project.scripts]
-euv-sim = "src.pp_model:main"
 euv-compare = "src.io.results_cli:main"
 euv-mph = "src.cli.mph_runner:main"

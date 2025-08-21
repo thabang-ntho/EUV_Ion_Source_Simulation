@@ -1,6 +1,6 @@
 PYTHON := python
 
-.PHONY: install install-dev test test-comsol check-fresnel check-kumar smoke provenance lint lint-docs test-cov clean mph-check mph-solve
+.PHONY: install install-dev test test-comsol lint lint-docs test-cov clean mph-check mph-solve
 
 install:
 	uv pip install -e .
@@ -9,32 +9,22 @@ install-dev:
 	uv pip install -e .[dev]
 
 test:
-	PYTHONPATH=$$(pwd) uv run pytest -q
+    PYTHONPATH=$$(pwd) uv run pytest -q
 
 test-comsol:
 	RUN_COMSOL=1 PYTHONPATH=$$(pwd) uv run pytest -m comsol -q
 
-check-fresnel:
-	uv run python src/pp_model.py --check-only --absorption-model fresnel
 
-check-kumar:
-	uv run python src/pp_model.py --check-only --absorption-model kumar
-
-smoke: check-fresnel check-kumar
-	@echo "Smoke checks completed."
-
-provenance:
-	LOG_LEVEL=INFO uv run python src/pp_model.py --check-only
 
 # MPh-based builder (no solve); requires COMSOL env configured
 mph-check:
 	. scripts/setup_comsol_env.sh >/dev/null 2>&1 || true; \
-	uv run euv-mph --check-only --variant fresnel --log-level INFO
+	uv run python -m src.cli.mph_runner --check-only --variant fresnel --log-level INFO
 
 # MPh-based builder + solve (headless). Provide COMSOL_HOST/PORT via env if remote
 mph-solve:
 	. scripts/setup_comsol_env.sh >/dev/null 2>&1 || true; \
-	uv run euv-mph --solve --variant fresnel --log-level INFO
+	uv run python -m src.cli.mph_runner --solve --variant fresnel --log-level INFO
 
 lint:
 	@command -v ruff >/dev/null 2>&1 && ruff check . || \

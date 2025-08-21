@@ -51,14 +51,19 @@ We provide a minimal MPh runner that builds (and optionally solves) the model fa
 source scripts/setup_comsol_env.sh
 
 # 1) Build-only (no solve); saves results/fresnel_model.mph
+# After installing the package (make install), you can use the script:
 euv-mph --check-only --variant fresnel --log-level INFO
+# Or without installation:
+python -m src.cli.mph_runner --check-only --variant fresnel --log-level INFO
 
 # 2) Build + solve; saves results/fresnel_model_solved.mph
 #    For remote servers set COMSOL_HOST/COMSOL_PORT via flags or env
 euv-mph --solve --variant fresnel --host 127.0.0.1 --port 2036
+# Or: python -m src.cli.mph_runner --solve --variant fresnel --host 127.0.0.1 --port 2036
 
 # 3) Custom output and config
 euv-mph --check-only --variant kumar --output results/kumar_run.mph --config data/config.yaml
+# Or: python -m src.cli.mph_runner --check-only --variant kumar --output results/kumar_run.mph --config data/config.yaml
 ```
 
 Environment variables (optional):
@@ -66,11 +71,8 @@ Environment variables (optional):
 - `COMSOL_CORES`: number of server cores to request if supported by `mph.start()`.
 You can also pass `--host/--port` flags which are mapped to these envs.
 
-#### Legacy Interface (Still Available)
-```bash
-# Original implementation
-python src/pp_model.py
-```
+#### Legacy Interface
+The legacy pp_model CLI has been removed in mph_dev. Use the modern `euv-mph` runner.
 
 ---
 
@@ -117,7 +119,6 @@ python src/pp_model.py
 │ │ └─ mph_kumar.py          # Kumar fluid dynamics model
 │ ├─ cli/
 │ │  └─ mph_runner.py       # MPh CLI runner (script: euv-mph)
-│ └─ pp_model.py             # Legacy implementation
 ├─ tests/
 │ ├─ mph_integration/        # MPh integration tests
 │ ├─ unit/                   # Unit tests
@@ -157,6 +158,16 @@ Use `make clean` to remove Python caches and test artifacts without touching `da
 ```
 make clean
 ```
+
+## Testing
+
+- Default test run does not invoke COMSOL. COMSOL-only tests are gated by `RUN_COMSOL=1` or explicit `-m comsol` markers.
+- Legacy tests (pp_model/low-level Java paths) are skipped under the mph-only focus.
+- Quick mph-only sanity:
+  - `pytest -q tests/test_cli_help.py` – validates CLI help.
+  - `pytest -q tests/test_mph_geometry.py tests/test_mph_selections.py tests/test_mph_materials.py tests/test_mph_physics.py tests/test_mph_study_activation.py tests/test_mph_modelbuilder.py` – core mph tests.
+  - `make mph-check` – build-only via MPh saves `.mph` (requires COMSOL env configured but does not solve).
+  - `RUN_COMSOL=1 make test-comsol` – enable COMSOL tests if your server is available.
 
 
 ## 🔧 Requirements

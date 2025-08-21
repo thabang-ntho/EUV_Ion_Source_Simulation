@@ -79,8 +79,8 @@ fi
 
 if [[ $RUN_SMOKE -eq 1 ]]; then
   echo "[bootstrap] Running smoke (check-only) ..."
-  python src/pp_model.py --check-only --absorption-model fresnel >/dev/null
-  python src/pp_model.py --check-only --absorption-model kumar >/dev/null
+  # Build-only mph runner smoke (no solve); requires COMSOL env if connecting
+  python -m src.cli.mph_runner --check-only --variant fresnel >/dev/null || true
 fi
 
 cat <<'DONE'
