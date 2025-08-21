@@ -48,7 +48,37 @@ def parse_param_file(p: Path) -> dict[str, str]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="Kumar 2D — MPh runner (aligned with mph_core architecture)")
+    ap = argparse.ArgumentParser(
+        description=(
+            """Kumar 2D — MPh runner (aligned with mph_core)
+
+Physics (paper-faithful):
+- Heat Transfer in Fluids: droplet (ht), gas (ht2)
+- Laminar Flow: droplet (spf, Marangoni), gas (spf2, recoil)
+- Transport of Diluted Species: gas (tds, tin vapor)
+
+Boundary conditions:
+- Surface Gaussian laser at metal/gas interface
+- Evap latent heat: liquid −Lv_sn*J_evap, gas +Lv_sn*J_evap
+- Recoil normal stress: f0 = -(1+beta_r/2)*Psat(T)
+- Marangoni tangential stress on interface
+
+Meshing and study:
+- Mesh: droplet-refined size, BoundaryLayer on interface, FreeTri
+- Study: time dependent (t_start..t_pulse/Time_End)
+
+Inputs/Outputs:
+- Input params: KUMAR-2D/parameters.txt
+- Output mph:   KUMAR-2D/results/kumar2d_model.mph
+
+Examples:
+  python KUMAR-2D/run_kumar_mph.py --dry-run
+  RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --check-only --out KUMAR-2D/results/kumar2d_model.mph
+  RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --solve --host $COMSOL_HOST --port $COMSOL_PORT --out KUMAR-2D/results/kumar2d_model.mph
+"""
+        ),
+        formatter_class=argparse.RawTextHelpFormatter
+    )
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--dry-run", action="store_true", help="No COMSOL; print plan and exit")
     g.add_argument("--check-only", action="store_true", help="Build only, no solve")

@@ -267,7 +267,20 @@ def build_model(params: dict, out_path: Path, solve: bool = False) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description='Kumar 2D MPh translation runner')
+    ap = argparse.ArgumentParser(
+        description=(
+            'Kumar 2D — direct MPh translation (container API)\n\n'
+            'Physics (paper-faithful):\n'
+            '- Heat Transfer (ht, ht2), Laminar Flow (spf, spf2), TDS (tds)\n'
+            'BCs: Surface Gaussian laser; ±Lv_sn·J_evap; recoil; Marangoni\n\n'
+            'Meshing/Study: droplet-refined + boundary layer; time dependent\n\n'
+            'IO: params=KUMAR-2D/parameters.txt; out=KUMAR-2D/results/*.mph\n\n'
+            'Examples:\n'
+            '  python KUMAR-2D/kumar_2d_mph.py --dry-run\n'
+            '  RUN_COMSOL=1 python KUMAR-2D/kumar_2d_mph.py --check-only --out KUMAR-2D/results/kumar2d_model.mph'
+        ),
+        formatter_class=argparse.RawTextHelpFormatter
+    )
     g = ap.add_mutually_exclusive_group()
     g.add_argument('--dry-run', action='store_true')
     g.add_argument('--check-only', action='store_true')
