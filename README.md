@@ -44,23 +44,27 @@ pip install -r requirements.txt
 ### Run Simulations
 
 #### Modern MPh Interface (Recommended)
+We provide a minimal MPh runner that builds (and optionally solves) the model faithfully to `mph_example.py` API patterns.
+
 ```bash
-# List available parameters
-python -m src.mph_cli fresnel --list-params
-python -m src.mph_cli kumar --list-params
+# 0) Prepare COMSOL env (local install)
+source scripts/setup_comsol_env.sh
 
-# Run Fresnel variant (evaporation-focused)
-python -m src.mph_cli fresnel --solve --output fresnel_model.mph
+# 1) Build-only (no solve); saves results/fresnel_model.mph
+euv-mph --check-only --variant fresnel --log-level INFO
 
-# Run Kumar variant (fluid dynamics-focused)  
-python -m src.mph_cli kumar --solve --output kumar_model.mph
+# 2) Build + solve; saves results/fresnel_model_solved.mph
+#    For remote servers set COMSOL_HOST/COMSOL_PORT via flags or env
+euv-mph --solve --variant fresnel --host 127.0.0.1 --port 2036
 
-# Dry run to validate configuration
-python -m src.mph_cli fresnel --dry-run
-
-# Override parameters
-python -m src.mph_cli fresnel --solve -p R_drop=30 -p T_ref=350
+# 3) Custom output and config
+euv-mph --check-only --variant kumar --output results/kumar_run.mph --config data/config.yaml
 ```
+
+Environment variables (optional):
+- `COMSOL_HOST`, `COMSOL_PORT`: point to a remote COMSOL server (overrides local).
+- `COMSOL_CORES`: number of server cores to request if supported by `mph.start()`.
+You can also pass `--host/--port` flags which are mapped to these envs.
 
 #### Legacy Interface (Still Available)
 ```bash
@@ -80,8 +84,8 @@ python src/pp_model.py
 - **Materials Handler** (`src/mph_core/materials.py`) - Temperature-dependent materials with property assignment
 
 ### 🔄 **In Progress:**
-- **Physics Manager** (`src/mph_core/physics.py`) - Heat transfer physics setup
-- **Study Manager** (`src/mph_core/studies.py`) - Transient studies and solving
+- **Physics Manager** (`src/mph_core/physics.py`) - Heat transfer physics setup (base complete)
+- **Study Manager** (`src/mph_core/studies.py`) - Transient studies and solving (activation fixed)
 
 ### 📚 **Key Resources:**
 - **[COMSOL Setup Guide](docs/mph/comsol_setup.md)** - Complete license configuration and troubleshooting
@@ -89,9 +93,10 @@ python src/pp_model.py
 - **`mph_example.py`** - Reference implementation showing correct MPh API patterns
 
 ### 🚨 **Current Status:**
-- Materials module **ready for testing** with correct API patterns
-- COMSOL connection issue preventing final validation (system restart recommended)
-- Physics and studies modules **next priority** for implementation
+- Materials, geometry, selections, physics(HT) modules aligned to MPh patterns
+- Study activation updated to mirror mph_example (frames + node refs; robust fallback)
+- New CLI `euv-mph` for build-only and build+solve flows
+- Pytests guarded from accidental COMSOL invocation (enable with `RUN_COMSOL=1`)
 
 ---
 
@@ -110,7 +115,8 @@ python src/pp_model.py
 │ ├─ models/                 # Model variants
 │ │ ├─ mph_fresnel.py        # Fresnel evaporation model
 │ │ └─ mph_kumar.py          # Kumar fluid dynamics model
-│ ├─ mph_cli.py              # Modern CLI interface
+│ ├─ cli/
+│ │  └─ mph_runner.py       # MPh CLI runner (script: euv-mph)
 │ └─ pp_model.py             # Legacy implementation
 ├─ tests/
 │ ├─ mph_integration/        # MPh integration tests

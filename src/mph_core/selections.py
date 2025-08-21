@@ -59,11 +59,18 @@ class SelectionManager:
         # Access selections container
         sel_container = self.model/'selections'
         
+        # Get parameters from geometry config with fallbacks
+        Lx = self.params.get('Lx', 2.0e-4)
+        Ly = self.params.get('Ly', 3.0e-4) 
+        R = self.params.get('R', 1.35e-5)
+        x_center = self.params.get('x_beam', Lx/2)
+        y_center = self.params.get('y_beam', Ly/2)
+        
         # Droplet domain selection
         s_drop = sel_container.create('Disk', name='s_drop')
-        s_drop.property('posx', f"{self.params['X_max']}[um]")
-        s_drop.property('posy', f"{self.params['Y_max']}[um]")
-        s_drop.property('r', f"{self.params['R_drop']*0.9}[um]")
+        s_drop.property('posx', f"{x_center*1e6}[um]")
+        s_drop.property('posy', f"{y_center*1e6}[um]")
+        s_drop.property('r', f"{R*0.9*1e6}[um]")
         selections['s_drop'] = s_drop
         
         # For now, create a simple gas domain selection - we'll refine this later
@@ -97,11 +104,18 @@ class SelectionManager:
         # Access selections container
         sel_container = self.model/'selections'
         
+        # Get parameters from geometry config
+        Lx = self.params.get('Lx', 2.0e-4)
+        Ly = self.params.get('Ly', 3.0e-4) 
+        R = self.params.get('R', 1.35e-5)
+        x_center = self.params.get('x_beam', Lx/2)
+        y_center = self.params.get('y_beam', Ly/2)
+        
         # Laser irradiation zone - use a simpler approach
         s_laser = sel_container.create('Disk', name='s_laser')
-        s_laser.property('posx', f"{self.params['X_max']}[um]")
-        s_laser.property('posy', f"{self.params['Y_max']}[um]")
-        s_laser.property('r', f"{self.params['R_drop']*0.5}[um]")  # Laser spot size
+        s_laser.property('posx', f"{x_center*1e6}[um]")
+        s_laser.property('posy', f"{y_center*1e6}[um]")
+        s_laser.property('r', f"{R*0.5*1e6}[um]")  # Laser spot size
         selections['s_laser'] = s_laser
         
         logger.info("Created physics selections: s_laser")

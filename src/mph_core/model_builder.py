@@ -138,10 +138,24 @@ class ModelBuilder:
     def _connect_to_comsol(self) -> None:
         """Connect to COMSOL Multiphysics"""
         logger.info("Connecting to COMSOL Multiphysics")
-        
+
         try:
             # Initialize MPh client
-            self.client = mph.start()
+            import os
+            host = os.environ.get("COMSOL_HOST")
+            port = os.environ.get("COMSOL_PORT")
+            cores = os.environ.get("COMSOL_CORES")
+            if host and port:
+                self.client = mph.start(host=host, port=int(port))
+            elif cores:
+                # Some mph versions accept cores kwarg
+                try:
+                    self.client = mph.start(cores=int(cores))
+                except TypeError:
+                    # Fallback if cores kw unsupported
+                    self.client = mph.start()
+            else:
+                self.client = mph.start()
             self.build_stages['client_connected'] = True
             
             logger.info("Successfully connected to COMSOL")
@@ -153,17 +167,29 @@ class ModelBuilder:
     def _create_model(self) -> None:
         """Create new model with appropriate settings"""
         logger.info(f"Creating new {self.variant} model")
-        
+
         # Create model
         model_name = f"EUV_Droplet_{self.variant.title()}"
         self.model = self.client.create(model_name)
-        
+
         # Model is created, no need to set name property as it's already set
         logger.info(f"Model '{model_name}' created successfully")
-        
-        # Set geometry space dimension
-        # Note: 2D geometry will be set up in geometry builder
-        
+
+        # Ensure a component exists (per mph_example.py) so frames are present
+        try:
+            components = self.model/'components'
+            # If a default component exists, access won't throw; otherwise create one
+            try:
+                _ = components/'component'
+                logger.info("Using existing component")
+            except Exception:
+                components.create(True, name='component')
+                logger.info("Created component 'component'")
+        except Exception as e:
+            logger.warning(f"Unable to ensure component presence: {e}")
+
+        # Set geometry space dimension (handled by geometry builder)
+
         self.build_stages['model_created'] = True
         logger.info(f"Created model: {model_name}")
     

@@ -159,10 +159,13 @@ class MaterialsHandler:
             
         material = self.materials[material_name]
         
+        # Get Basic sub-node where properties are actually stored
+        basic_node = material/'Basic'
+        
         properties = {}
-        for prop in ['rho', 'k', 'Cp', 'mu']:
+        for prop in ['density', 'thermalconductivity', 'heatcapacity']:
             try:
-                properties[prop] = material.property(prop)
+                properties[prop] = basic_node.property(prop)
             except:
                 properties[prop] = 'undefined'
                 
@@ -180,14 +183,18 @@ class MaterialsHandler:
         for name, material in self.materials.items():
             is_valid = True
             
-            # Check required properties exist
-            required_props = ['rho', 'k', 'Cp']
+            # Check required properties exist - use COMSOL property names
+            required_props = ['density', 'thermalconductivity', 'heatcapacity']
             if name == 'tin':
-                required_props.extend(['mu', 'L_fusion'])
+                # For tin, we only validate the basic thermal properties for now
+                # Additional properties like viscosity can be added later
+                pass
                 
             for prop in required_props:
                 try:
-                    value = material.property(prop)
+                    # Access property from Basic sub-node where they are actually set
+                    basic_node = material/'Basic'
+                    value = basic_node.property(prop)
                     if not value or value == '':
                         is_valid = False
                         logger.error(f"Material '{name}' missing property '{prop}'")

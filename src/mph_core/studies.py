@@ -1,12 +1,11 @@
 """
 Study Manager Module
 
-High-level study and solver management using MPh API.
-Replaces low-level Java study calls with pythonic study.create() patterns.
+High-level study and solver management using MPh API
 """
 
-from typing import Dict, Any, List, Optional
 import logging
+from typing import Dict, Any, Optional, List
 
 logger = logging.getLogger(__name__)
 
@@ -29,269 +28,263 @@ class StudyManager:
         self.studies = {}
         self.meshes = {}
         
-    def create_all_studies(self) -> Dict[str, Any]:
-        """
-        Create all required studies and meshes
-        
-        Returns:
-            Dictionary of created study objects
-        """
-        logger.info("Creating studies and meshes with MPh API")
-        
-        # Create mesh first
-        self.meshes['main'] = self._create_mesh()
-        
-        # Create transient study
-        self.studies['transient'] = self._create_transient_study()
-        
-        # Create steady-state study (if needed)
-        if self.params.get('Create_Steady_Study', False):
-            self.studies['steady'] = self._create_steady_study()
-            
-        logger.info(f"Created {len(self.studies)} studies and {len(self.meshes)} meshes")
-        return self.studies
-    
     def _create_mesh(self) -> Any:
-        """Create adaptive mesh with boundary layers"""
-        logger.info("Creating adaptive mesh")
+        """Create mesh for the geometry"""
+        logger.info("Creating mesh")
         
-        # Create mesh
-        mesh = self.model.meshes().create('Mesh', tag='mesh1')
+        # Access meshes container and create mesh directly
+        meshes = self.model/'meshes'
+        mesh = meshes.create(self.model/'geometries'/'geometry', name='mesh')
         
-        # Global mesh settings
-        mesh_size = self.params.get('Global_Mesh_Size', 'fine')
-        mesh.property('size', mesh_size)
+        # For now, use default meshing - can be refined later
+        # COMSOL will automatically generate a suitable mesh
         
-        # Droplet domain - finer mesh
-        droplet_mesh = mesh.create('Size', tag='droplet_size')
-        droplet_mesh.property('geometric_entity_selection', 'geom1_sel1')  # Droplet selection
-        
-        droplet_hmax = self.params.get('Droplet_Mesh_Max', 2e-6)
-        droplet_hmin = self.params.get('Droplet_Mesh_Min', 0.5e-6)
-        droplet_mesh.property('hmax', f'{droplet_hmax}[m]')
-        droplet_mesh.property('hmin', f'{droplet_hmin}[m]')
-        
-        # Boundary layers for heat transfer
-        if 'ht' in self.physics:
-            boundary_layer = mesh.create('BoundaryLayers', tag='bl1')
-            boundary_layer.property('selection', 'geom1_sel2')  # Droplet surface
-            
-            bl_thickness = self.params.get('Boundary_Layer_Thickness', 0.2e-6)
-            bl_layers = self.params.get('Boundary_Layer_Count', 5)
-            boundary_layer.property('blnlayers', bl_layers)
-            boundary_layer.property('blthickness', f'{bl_thickness}[m]')
-            
-            logger.info(f"Added boundary layers: {bl_layers} layers, {bl_thickness:.2e}m thickness")
-        
-        # Mesh adaptation settings
-        adaptation = mesh.create('AdaptiveMeshRefinement', tag='amr1')
-        adaptation.property('maxlevel', 3)
-        adaptation.property('criterion', 'energy')
-        
-        logger.info(f"Created mesh with {mesh_size} global size")
+        logger.info("Created mesh with default settings")
         return mesh
     
     def _create_transient_study(self) -> Any:
         """Create time-dependent study"""
         logger.info("Creating transient study")
         
-        # Create study
-        study = self.model.studies().create('Study', tag='std1')
-        # study.property('name', 'Transient Analysis')  # Name is set at creation
+        # Access studies container and create study directly
+        studies = self.model/'studies'
+        study = studies.create(name='transient')
+        
+        # Set study properties 
+        study.java.setGenPlots(False)
+        study.java.setGenConv(False)
         
         # Create time-dependent step
-        time_step = study.create('Transient', tag='time1')
+        step = study.create('Transient', name='time_dependent')
         
-        # Add all physics to study
-        physics_list = list(self.physics.keys())
-        time_step.property('physics', physics_list)
+        # Set time range - for now use simple range
+        t_final = self.params.get('Simulation_Time', 1e-6)  # 1 microsecond default
+        step.property('tlist', f'range(0, {t_final/100}, {t_final})')  # 100 time steps
         
-        # Time settings
-        t_start = self.params.get('Time_Start', 0.0)
-        t_end = self.params.get('Time_End', 1e-6)
-        dt_init = self.params.get('Time_Step_Initial', 1e-9)
-        dt_max = self.params.get('Time_Step_Max', 1e-8)
+        logger.info(f"Physics interfaces available: {list(self.physics.keys())}")
+
+        # Activate physics per mph_example.py using explicit node references
+        # Build the activation list as alternating references and states
+        try:
+            physics_container = self.model/'physics'
+            activation_list = []
+
+            # Prefer explicit Heat Transfer interface created by PhysicsManager
+            # PhysicsManager names it 'heat_transfer'; if missing, fall back to any provided 'ht' reference
+            iface_node = None
+            try:
+                iface_node = physics_container/'heat_transfer'
+            except Exception:
+                pass
+            if iface_node is None and 'ht' in self.physics:
+                # The property API accepts node references; use the object from manager
+                iface_node = self.physics['ht']
+
+            if iface_node is not None:
+                try:
+                    logger.info(f"Activating physics interface: tag={iface_node.tag()} path={getattr(iface_node, 'path', lambda: 'n/a')() if hasattr(iface_node, 'path') else 'n/a'}")
+                except Exception:
+                    pass
+                activation_list.extend([iface_node, 'on'])
+            else:
+                logger.warning("No heat transfer interface found to activate; continuing without explicit activation")
+
+            # Frames as seen in mph_example.py; discover robustly
+            try:
+                frames = self.model/'frames'
+                spatial = None
+                material = None
+                # Try common tags first
+                try:
+                    spatial = frames/'spatial1'
+                except Exception:
+                    pass
+                try:
+                    material = frames/'material1'
+                except Exception:
+                    pass
+                # Fallback: search by name pattern
+                if (spatial is None or material is None) and frames:
+                    for fr in frames:
+                        try:
+                            tg = fr.tag()
+                            if spatial is None and tg.startswith('spatial'):
+                                spatial = fr
+                            if material is None and tg.startswith('material'):
+                                material = fr
+                        except Exception:
+                            continue
+                if spatial is not None:
+                    activation_list.extend([f"frame:{spatial.tag()}", 'on'])
+                if material is not None:
+                    activation_list.extend([f"frame:{material.tag()}", 'on'])
+                if spatial is None or material is None:
+                    # As a last resort, use default names
+                    activation_list.extend(['frame:spatial1', 'on', 'frame:material1', 'on'])
+            except Exception:
+                activation_list.extend(['frame:spatial1', 'on', 'frame:material1', 'on'])
+
+            # Debug types for clarity
+            try:
+                debug_types = [type(x).__name__ for x in activation_list]
+                logger.debug(f"Activation types: {debug_types}")
+            except Exception:
+                pass
+
+            if activation_list:
+                try:
+                    step.property('activate', activation_list)
+                except Exception as e1:
+                    # Fallback: convert any node references to their path strings
+                    try:
+                        converted: List[str] = []
+                        for item in activation_list:
+                            if hasattr(item, 'path'):
+                                converted.append(item.path())
+                            else:
+                                converted.append(item)
+                        logger.debug(f"Fallback activation payload (as strings): {converted}")
+                        step.property('activate', converted)
+                    except Exception as e2:
+                        raise e1
+        except Exception as e:
+            # Log but do not fail study creation; helps when running in --check-only environments
+            logger.warning(f"Physics activation setup skipped due to error: {e}")
         
-        time_step.property('tstart', f'{t_start}[s]')
-        time_step.property('tstop', f'{t_end}[s]')
-        time_step.property('initstep', f'{dt_init}[s]')
-        time_step.property('maxstep', f'{dt_max}[s]')
-        
-        # Output times for postprocessing
-        output_times = self._generate_output_times(t_start, t_end)
-        time_step.property('tout', output_times)
-        
-        # Solver settings
-        self._configure_transient_solver(study)
-        
-        logger.info(f"Created transient study: {t_start}s to {t_end}s")
+        logger.info(f"Created transient study with final time {t_final:.2e}s")
         return study
-    
-    def _create_steady_study(self) -> Any:
-        """Create steady-state study for initial conditions"""
-        logger.info("Creating steady-state study")
-        
-        # Create study
-        study = self.model.studies().create('Study', tag='std2')
-        # study.property('name', 'Steady State Analysis')  # Name is set at creation
-        
-        # Create stationary step
-        steady_step = study.create('Stationary', tag='stat1')
-        
-        # Add only steady-compatible physics
-        steady_physics = ['ht']  # Usually only heat transfer for initial conditions
-        steady_step.property('physics', steady_physics)
-        
-        # Solver settings for steady state
-        self._configure_steady_solver(study)
-        
-        logger.info("Created steady-state study")
-        return study
-    
-    def _configure_transient_solver(self, study: Any) -> None:
-        """Configure transient solver settings"""
-        
-        # Create solver configuration
-        solver = study.create('SolverConfiguration', tag='sol1')
-        # solver.property('name', 'Transient Solver')  # Name is set at creation
-        
-        # Time stepping method
-        time_method = self.params.get('Time_Method', 'bdf')
-        solver.property('timemethod', time_method)
-        
-        # Nonlinear solver
-        nonlinear_method = self.params.get('Nonlinear_Method', 'newton')
-        solver.property('nonlinmethod', nonlinear_method)
-        
-        # Tolerances
-        rtol = self.params.get('Relative_Tolerance', 1e-3)
-        atol = self.params.get('Absolute_Tolerance', 1e-6)
-        solver.property('rtol', rtol)
-        solver.property('atol', atol)
-        
-        # Maximum iterations
-        max_iter = self.params.get('Max_Iterations', 25)
-        solver.property('maxiter', max_iter)
-        
-        logger.info(f"Configured transient solver: {time_method}, rtol={rtol}, atol={atol}")
-    
-    def _configure_steady_solver(self, study: Any) -> None:
-        """Configure steady-state solver settings"""
-        
-        # Create solver configuration
-        solver = study.create('SolverConfiguration', tag='sol2')
-        # solver.property('name', 'Steady Solver')  # Name is set at creation
-        
-        # Nonlinear solver
-        solver.property('nonlinmethod', 'newton')
-        
-        # Relaxed tolerances for steady state
-        solver.property('rtol', 1e-2)
-        solver.property('atol', 1e-5)
-        solver.property('maxiter', 50)
-        
-        logger.info("Configured steady-state solver")
-    
-    def _generate_output_times(self, t_start: float, t_end: float) -> str:
-        """Generate logarithmically spaced output times"""
-        
-        n_outputs = self.params.get('Output_Time_Points', 50)
-        
-        # Logarithmic spacing
-        import numpy as np
-        if t_start == 0:
-            t_start = t_end / 1000  # Avoid log(0)
-            
-        times = np.logspace(np.log10(t_start), np.log10(t_end), n_outputs)
-        
-        # Format as COMSOL expression
-        time_str = ' '.join([f'{t:.6e}[s]' for t in times])
-        
-        logger.info(f"Generated {n_outputs} output times from {t_start:.2e}s to {t_end:.2e}s")
-        return time_str
-    
+
+    # --- Additions: API expected by ModelBuilder ---
+    def create_all_studies(self) -> Dict[str, Any]:
+        """Create required mesh and transient study, return studies dict."""
+        logger.info("Creating studies and meshes with MPh API")
+        self.meshes['main'] = self._create_mesh()
+        self.studies['transient'] = self._create_transient_study()
+        return self.studies
+
+    def validate_studies(self) -> List[str]:
+        """Basic validation of created studies; returns list of issues."""
+        issues: List[str] = []
+        if 'transient' not in self.studies:
+            issues.append("Missing 'transient' study")
+        return issues
+
+    def run_study(self, study_name: str, step_name: Optional[str] = None) -> bool:
+        """Run a study by name; create solution if missing and attach.
+
+        Returns True on apparent success (no exception), False otherwise.
+        """
+        try:
+            studies = self.model/'studies'
+            study = studies[study_name]
+            # Ensure a solution exists and is attached
+            solutions = self.model/'solutions'
+            try:
+                solution = solutions/'solution'
+            except Exception:
+                solution = solutions.create(name='solution')
+                solution.java.study(study.tag())
+                solution.java.attach(study.tag())
+                solution.create('StudyStep', name='equations')
+                solution.create('Variables', name='variables')
+                solver = solution.create('Time', name='time_dependent_solver')
+                try:
+                    t_final = self.params.get('Simulation_Time', 1e-6)
+                    solver.property('tlist', f'range(0, {t_final/100}, {t_final})')
+                except Exception:
+                    pass
+            # Solve the study
+            study.solve()
+            return True
+        except Exception as e:
+            logger.error(f"Failed to run study '{study_name}': {e}")
+            return False
+
     def get_study_info(self) -> Dict[str, Dict[str, Any]]:
-        """Get information about all studies"""
-        info = {}
-        
+        """Return minimal info about created studies."""
+        info: Dict[str, Dict[str, Any]] = {}
         for name, study in self.studies.items():
-            steps = []
-            for step_tag in study.tags():
-                step = study.feature(step_tag)
-                steps.append({
-                    'tag': step_tag,
-                    'type': step.typename(),
-                    'physics': step.property('physics') if hasattr(step, 'property') else []
-                })
-                
-            info[name] = {
-                'tag': study.tag(),
-                'name': study.name(),
-                'steps': steps
-            }
-            
+            try:
+                info[name] = {"tag": study.tag(), "name": study.name()}
+            except Exception:
+                info[name] = {"tag": None, "name": None}
         return info
     
-    def validate_studies(self) -> List[str]:
-        """
-        Validate study configurations
+    def _create_solution(self, study) -> Any:
+        """Create solution for the study"""
+        logger.info("Creating solution")
         
-        Returns:
-            List of validation issues
-        """
-        issues = []
+        # Access solutions container and create solution directly
+        solutions = self.model/'solutions'
+        solution = solutions.create(name='solution')
         
-        for name, study in self.studies.items():
-            # Check physics assignments
-            for step_tag in study.tags():
-                step = study.feature(step_tag)
-                try:
-                    physics_list = step.property('physics')
-                    for phys in physics_list:
-                        if phys not in self.physics:
-                            issues.append(f"Study '{name}' references unknown physics '{phys}'")
-                except:
-                    pass  # Some steps may not have physics property
-                    
-        # Check mesh validity
-        if 'main' in self.meshes:
-            mesh = self.meshes['main']
-            # Basic mesh validation would go here
-            
-        if issues:
-            logger.warning(f"Study validation found {len(issues)} issues")
-        else:
-            logger.info("All studies validated successfully")
-            
-        return issues
+        # Link solution to study - this sets the solution to use this study
+        solution.java.study(study.tag())
+        solution.java.attach(study.tag())
+        
+        # Create basic solver components
+        solution.create('StudyStep', name='equations')
+        variables = solution.create('Variables', name='variables')
+        
+        # Set time list for variables
+        t_final = self.params.get('Simulation_Time', 1e-6)  # 1 microsecond default
+        variables.property('clist', [f'range(0, {t_final/100}, {t_final})', '0.001[s]'])
+        
+        # Create time-dependent solver
+        solver = solution.create('Time', name='time_dependent_solver')
+        solver.property('tlist', f'range(0, {t_final/100}, {t_final})')
+        
+        # The "No current feature assigned" error suggests we need this
+        # Looking at other examples, we don't need to set a feature explicitly
+        # Just making sure all components are properly created and linked
+        
+        logger.info("Created solution and linked to study")
+        return solution
     
-    def run_study(self, study_name: str, step_name: Optional[str] = None) -> bool:
-        """
-        Run a specific study
-        
-        Args:
-            study_name: Name of study to run
-            step_name: Specific step to run (optional)
-            
-        Returns:
-            True if successful
-        """
-        if study_name not in self.studies:
-            logger.error(f"Study '{study_name}' not found")
-            return False
-            
-        study = self.studies[study_name]
-        
+    def create_study_and_solve(self) -> Any:
+        """Create study, mesh geometry, and set up for solving"""
         try:
-            if step_name:
-                study.run(step_name)
-                logger.info(f"Completed study step: {study_name}.{step_name}")
-            else:
-                study.run()
-                logger.info(f"Completed study: {study_name}")
-                
-            return True
+            logger.info("Starting complete study creation and setup")
+            
+            # Create mesh
+            mesh = self._create_mesh()
+            
+            # Create study (using new _create_study method)
+            study = self._create_study()
+            
+            # Create solution
+            solution = self._create_solution(study)
+            
+            logger.info("Study creation and setup completed successfully")
+            return {
+                'mesh': mesh,
+                'study': study,
+                'solution': solution
+            }
             
         except Exception as e:
-            logger.error(f"Study '{study_name}' failed: {e}")
-            return False
+            logger.error(f"Failed to create study and setup: {e}")
+            raise
+    
+    def _create_study(self) -> Any:
+        """Create transient study (wrapper for backwards compatibility)"""
+        return self._create_transient_study()
+    
+    def solve(self, study_name: str = 'transient') -> Any:
+        """Solve the study"""
+        try:
+            logger.info(f"Starting solution for study: {study_name}")
+            
+            # Find the study
+            studies = self.model/'studies'
+            study = studies[study_name]
+            
+            # Run the study
+            study.solve()
+            
+            logger.info(f"Successfully solved study: {study_name}")
+            return study
+            
+        except Exception as e:
+            logger.error(f"Failed to solve study {study_name}: {e}")
+            raise

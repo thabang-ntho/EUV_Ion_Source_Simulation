@@ -58,15 +58,22 @@ class GeometryBuilder:
         geometries = model/'geometries'
         self.geometry = geometries.create(2, name='geometry')
         
+        # Get parameters from config with fallbacks
+        Lx = self.params.get('Lx', 2.0e-4)  # Domain width
+        Ly = self.params.get('Ly', 3.0e-4)  # Domain height
+        R = self.params.get('R', 1.35e-5)   # Droplet radius
+        x_center = self.params.get('x_beam', Lx/2)  # Droplet center x
+        y_center = self.params.get('y_beam', Ly/2)  # Droplet center y
+        
         # Create domain rectangle
         domain = self.geometry.create('Rectangle', name='domain')
-        domain.property('size', [f"{self.params['X_max']*2}[um]", f"{self.params['Y_max']*2}[um]"])
+        domain.property('size', [f"{Lx*1e6}[um]", f"{Ly*1e6}[um]"])
         domain.property('pos', ['0', '0'])
         
         # Create droplet circle
         droplet = self.geometry.create('Circle', name='droplet')
-        droplet.property('r', f"{self.params['R_drop']}[um]")
-        droplet.property('pos', [f"{self.params['X_max']}[um]", f"{self.params['Y_max']}[um]"])
+        droplet.property('r', f"{R*1e6}[um]")
+        droplet.property('pos', [f"{x_center*1e6}[um]", f"{y_center*1e6}[um]"])
         
         # Build geometry
         model.build(self.geometry)
