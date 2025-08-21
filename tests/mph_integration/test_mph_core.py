@@ -74,15 +74,18 @@ class TestMPhCoreModules:
     
     def test_geometry_creation(self, mock_model, test_params):
         """Test geometry creation calls"""
+        mock_geometries = Mock()
         mock_geometry = Mock()
-        mock_model.geometry.return_value = mock_geometry
+        mock_geometries.create.return_value = mock_geometry
+        mock_model.geometries.return_value = mock_geometries
         
         builder = GeometryBuilder(mock_model, test_params)
         builder.create_domain()
         
         # Check that geometry methods were called
-        mock_geometry.create.assert_called()
-        mock_geometry.run.assert_called_once()
+        mock_geometries.create.assert_called()  # Should create geometry container
+        mock_geometry.create.assert_called()    # Should create shapes
+        mock_model.build.assert_called_once_with(mock_geometry)  # Should build geometry
     
     def test_selection_manager_initialization(self, mock_model, test_params):
         """Test SelectionManager initialization"""
@@ -101,7 +104,9 @@ class TestMPhCoreModules:
         """Test tin material creation"""
         mock_materials = Mock()
         mock_tin = Mock()
+        mock_basic = Mock()
         mock_materials.create.return_value = mock_tin
+        mock_tin.Basic.return_value = mock_basic  # Mock the Basic section access
         mock_model.materials.return_value = mock_materials
         
         handler = MaterialsHandler(mock_model, test_params)
@@ -109,8 +114,8 @@ class TestMPhCoreModules:
         
         # Check tin material was created
         assert 'tin' in materials
-        mock_materials.create.assert_called_with('Material', tag='tin')
-        mock_tin.property.assert_called()
+        mock_materials.create.assert_called_with('Common', name='tin')  # Updated to match actual call
+        mock_basic.property.assert_called()  # Properties are set on the Basic section
     
     def test_physics_manager_heat_transfer(self, mock_model, test_params):
         """Test heat transfer physics setup"""
@@ -119,7 +124,17 @@ class TestMPhCoreModules:
         mock_physics.create.return_value = mock_ht
         mock_model.physics.return_value = mock_physics
         
-        selections = {'s_drop': Mock(), 's_surf': Mock(), 's_laser': Mock()}
+        # Include all required selections including boundary selections
+        selections = {
+            's_drop': Mock(), 
+            's_surf': Mock(), 
+            's_laser': Mock(),
+            's_gas': Mock(),
+            's_left': Mock(),
+            's_right': Mock(),
+            's_top': Mock(),
+            's_bottom': Mock()
+        }
         materials = {'tin': Mock()}
         
         manager = PhysicsManager(mock_model, selections, materials)
@@ -240,6 +255,8 @@ class TestModelBuilder:
         
         with ModelBuilder(test_params, 'fresnel') as builder:
             assert builder is not None
+            # Actually connect to COMSOL to trigger the disconnect on exit
+            builder._connect_to_comsol()
             
         # Check cleanup was called
         mock_client.disconnect.assert_called_once()

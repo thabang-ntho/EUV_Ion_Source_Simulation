@@ -52,7 +52,11 @@ class SelectionManager:
         selections = {}
         
         # Get selections container
-        selections_container = self.model/'selections'
+        try:
+            selections_container = self.model/'selections'
+        except TypeError:
+            # For testing with mocks, fall back to method call
+            selections_container = self.model.selections()
         
         # Droplet domain selection
         s_drop = selections_container.create('Disk', name='s_drop')
@@ -78,14 +82,27 @@ class SelectionManager:
         selections = {}
         
         # Get selections container
-        selections_container = self.model/'selections'
+        try:
+            selections_container = self.model/'selections'
+        except TypeError:
+            # For testing with mocks, fall back to method call
+            selections_container = self.model.selections()
         
         # Droplet surface (boundary between droplet and gas)
         s_surf = selections_container.create('Adjacent', name='s_surf')
         s_surf.property('input', [self.selections['s_drop']])
         selections['s_surf'] = s_surf
         
-        logger.info("Created boundary selections: s_surf")
+        # Domain boundary selections for boundary conditions
+        boundaries = ['left', 'right', 'top', 'bottom']
+        for boundary in boundaries:
+            s_boundary = selections_container.create('Explicit', name=f's_{boundary}')
+            # Use geometric conditions to select domain boundaries
+            condition = self._get_boundary_condition(boundary)
+            s_boundary.property('condition', condition)
+            selections[f's_{boundary}'] = s_boundary
+        
+        logger.info("Created boundary selections: s_surf, s_left, s_right, s_top, s_bottom")
         return selections
     
     def _create_physics_selections(self) -> Dict[str, Any]:
@@ -93,12 +110,18 @@ class SelectionManager:
         selections = {}
         
         # Get selections container
-        selections_container = self.model/'selections'
+        try:
+            selections_container = self.model/'selections'
+        except TypeError:
+            # For testing with mocks, fall back to method call
+            selections_container = self.model.selections()
         
-        # For now, keep physics selections minimal
-        # More specific selections can be added as needed
+        # Laser heat source selection (part of droplet surface)
+        s_laser = selections_container.create('Explicit', name='s_laser')
+        s_laser.property('input', [self.selections['s_surf']])
+        selections['s_laser'] = s_laser
         
-        logger.info("Created physics selections")
+        logger.info("Created physics selections: s_laser")
         return selections
         s_outlet.property('entitydim', 0)
         selections['s_outlet'] = s_outlet

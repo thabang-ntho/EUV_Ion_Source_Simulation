@@ -36,8 +36,9 @@ class ModelBuilder:
             params: Parameter dictionary from config
             variant: Model variant ('fresnel' or 'kumar')
         """
-        self.params = params
         self.variant = variant
+        # Merge with defaults first, then store params
+        self.params = self._apply_parameter_defaults(params)
         self.model = None
         
         # Component builders
@@ -345,13 +346,31 @@ class ModelBuilder:
         return info
     
     def cleanup(self) -> None:
-        """Clean up COMSOL connection"""
+        """Clean up COMSOL resources"""
         try:
             if hasattr(self, 'client') and self.client:
                 self.client.disconnect()
                 logger.info("Disconnected from COMSOL")
         except Exception as e:
             logger.warning(f"Error during cleanup: {e}")
+    
+    def _apply_parameter_defaults(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Apply default parameter values for missing keys"""
+        defaults = {
+            'Domain_Height': 100e-6,  # 100 micrometers
+            'Domain_Width': 100e-6,   # 100 micrometers
+            'Droplet_Radius': 25e-6,  # 25 micrometers
+            'Droplet_Center_X': 0.0,
+            'Droplet_Center_Y': 0.0,
+            'Output_Directory': 'results',
+            'Temperature_Max_Plot': 2000,
+            'Temperature_Min_Plot': 300
+        }
+        
+        # Start with defaults, then update with provided params
+        merged_params = defaults.copy()
+        merged_params.update(params)
+        return merged_params
     
     def __enter__(self):
         """Context manager entry"""

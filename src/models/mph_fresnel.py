@@ -8,6 +8,7 @@ Focus on evaporation and species transport physics.
 from typing import Dict, Any
 from pathlib import Path
 import logging
+import mph
 
 from ..mph_core.model_builder import ModelBuilder
 

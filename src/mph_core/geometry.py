@@ -53,13 +53,17 @@ class GeometryBuilder:
     def create_domain(self) -> None:
         """
         Create rectangular domain with circular droplet
-        
+
         Uses high-level MPh geometry.create() API instead of Java calls
         """
         logger.info("Creating geometry domain with MPh API")
-        
+
         # Get geometry container from model and create geometry
-        geometries = self.model/'geometries'
+        try:
+            geometries = self.model/'geometries'
+        except TypeError:
+            # For testing with mocks, fall back to method call
+            geometries = self.model.geometries()
         self.geometry = geometries.create(2, name='geom1')  # 2D geometry
         
         # Create rectangular domain

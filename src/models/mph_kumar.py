@@ -2,8 +2,13 @@
 MPh Kumar Variant
 
 Kumar-specific model implementation using MPh API.
-Focus on fluid flow and thermal dynamics with deformation.
+Full laser-material interaction physics with detailed heating and evaporation.
 """
+
+from typing import Dict, Any, List
+from pathlib import Path
+import logging
+import mph
 
 from typing import Dict, Any
 from pathlib import Path
