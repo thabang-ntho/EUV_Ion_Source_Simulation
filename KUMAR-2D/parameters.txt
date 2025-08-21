@@ -1,0 +1,44 @@
+% ---------- Geometry ----------
+R_drop          15[um]                 """Sn droplet radius"""
+W_dom           200[um]                """Vacuum/H₂ box half-width (radial)"""
+H_dom           300[um]                """Vacuum/H₂ box height  (axial)"""
+
+% ---------- Laser ----------
+P_laser         25e3[W]                """Peak power"""
+a_abs           0.12                   """Absorptivity of molten Sn at 1064 nm"""
+d_beam          60[um]                 """Beam FWHM diameter"""
+Rl_spot         30[um]                 """1/e² radius  ( = d_beam/2 )"""
+G_sigma         d_beam/sqrt(8*log(2))  """Gaussian σ from FWHM"""
+t_start         0[s]                   """Pulse start time"""
+t_pulse         300[ns]                """Pulse duration"""
+E_pulse         P_laser*t_pulse        """Energy in one pulse"""
+Ed              E_pulse/((pi/4)*d_beam^2)    """Fluence (J m⁻²)"""
+Ed_rate         Ed/t_pulse             """Average power density during pulse (W m⁻²)"""
+beta_r          0.15                   """Recombination coefficient"""
+
+% ---------- Material – Liquid Sn ----------
+rho_sn          6980[kg/m^3]           """Density"""
+Cp_sn           237[J/(kg*K)]          """Heat capacity"""
+k_sn            31[W/(m*K)]            """Thermal conductivity"""
+mu_sn           1.8e-3[Pa*s]           """Dynamic viscosity"""
+Lv_sn           2.96e6[J/kg]           """Latent heat of vaporisation"""
+Lf_sn           5.9e4[J/kg]            """Latent heat of fusion"""
+Tmelt_sn        778[K]                 """Melting temperature"""
+Tboil_sn        2875[K]                """Boiling temperature"""
+sigma_f         0.556[N/m]             """Surface tension at Tmelt_sn"""
+d_sigma_dT      -1.6e-4[N/(m*K)]       """dσ/dT  (Marangoni coefficient)"""
+M_sn            118.71e-3[kg/mol]      """Molar mass of Sn"""
+
+% ---------- Background gas – H₂ ----------
+P_amb           1.333[Pa]              """10 mTorr background pressure"""
+T_amb           300[K]                 """Background temperature"""
+Mw_H2           2.016e-3[kg/mol]       """Molar mass of H₂"""
+
+% ---------- Saturation-pressure fit ----------
+P_ref           1[atm]                 """Reference pressure for Psat(T)"""
+
+% ---------- Numerics ----------
+eps_t           1e-9[s]                """Smoothing width for pulse step"""
+mesh_size_int   1[um]                  """Base mesh size inside droplet"""
+mesh_size_ext   5[um]                  """Base mesh size in gas"""
+t_step          5[ns]                  """Nominal solver time step"""

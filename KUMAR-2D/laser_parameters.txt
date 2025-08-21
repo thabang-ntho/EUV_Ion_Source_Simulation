@@ -1,0 +1,17 @@
+P_laser     25e3[W]                                   """Laser pulse peak power"""
+t_start     0[s]                                      """Start time of the pulse"""
+t_pulse     300[ns]                                   """Pulse duration"""
+a_abs       0.12                                      """Absorptivity of molten Sn at 1064 nm"""
+
+d_beam      60[um]                                    """Beam FWHM diameter"""
+Rl_spot     30[um]                                    """1/e² Gaussian radius  (alias for convenience)"""
+
+E_pulse     P_laser*t_pulse                           """Total energy in one pulse"""
+Ed          E_pulse/((pi/4)*d_beam^2)                 """Energy density on droplet (J m⁻²)"""
+Ed_rate     Ed/t_pulse                                """Average surface power density (W m⁻²)"""
+
+G_sigma     d_beam/sqrt(8*log(2))                     """Beam σ obtained from FWHM (m)"""
+G_space     exp(-(r^2)/(2*G_sigma^2))                 """1-D Gaussian radial factor"""
+beta        (t>=t_start)*(t<=t_start+t_pulse)         """Rectangle gate: 1 during pulse, 0 otherwise"""
+
+q_laser     a_abs*Ed_rate*G_space*beta                """Surface heat-flux density q(r,t)"""

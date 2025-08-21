@@ -1,0 +1,6 @@
+"" -material.u_free+disp1.dX -test(material.u_free) "Lagrange (Quadratic)" "Boundaries 1–5, 7–8" Elemental
+"" -material.v_free+disp1.dY -test(material.v_free) "Lagrange (Quadratic)" "Boundaries 1–5, 7–8" Elemental
+"" disp1.dZ 0 "" "Boundaries 1–5, 7–8" Elemental
+"" material.u_lm test(material.u_lm) "Lagrange (Quadratic)" "No points " Elemental
+"" material.v_lm test(material.v_lm) "Lagrange (Quadratic)" "No points " Elemental
+"" 0 0 "" "No points " Elemental
