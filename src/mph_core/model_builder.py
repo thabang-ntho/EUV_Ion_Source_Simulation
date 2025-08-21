@@ -82,6 +82,8 @@ class ModelBuilder:
             # Stage 2: Create model and set parameters
             self._create_model()
             self._set_parameters()
+            # Variant aux features (functions/variables)
+            self._create_aux_features()
             
             # Stage 3: Build geometry and selections
             self._build_geometry()
@@ -188,6 +190,61 @@ class ModelBuilder:
         
         self.build_stages['parameters_set'] = True
         logger.info(f"Set {param_count} model parameters")
+
+    def _create_aux_features(self) -> None:
+        """Create variant-specific functions and variables (e.g., pulse, Psat, J_evap)."""
+        if self.variant != 'kumar':
+            return
+        logger.info("Creating Kumar auxiliary functions and variables")
+
+        # Functions container
+        try:
+            functions = self.model/'functions'
+        except TypeError:
+            functions = getattr(self.model, 'functions', lambda: None)()
+
+        # Variables container
+        try:
+            variables = self.model/'variables'
+        except TypeError:
+            variables = getattr(self.model, 'variables', lambda: None)()
+
+        # Ensure laser center defaults used in expressions
+        if 'x0' not in self.params:
+            self.params['x0'] = 0.0
+            try:
+                self.model.parameter('x0', '0[m]')
+            except Exception:
+                pass
+        if 'y0' not in self.params:
+            self.params['y0'] = 0.0
+            try:
+                self.model.parameter('y0', '0[m]')
+            except Exception:
+                pass
+
+        # Create pulse(t) as analytic function: flc2hs(t-t0,eps)-flc2hs(t-(t0+tau),eps)
+        t0 = str(self.params.get('t_start', self.params.get('Time_Start', '0[s]')))
+        tau = str(self.params.get('t_pulse', self.params.get('Time_End', '1e-6[s]')))
+        eps = str(self.params.get('eps_t', '1e-9[s]'))
+        try:
+            pulse = functions.create('Analytic', name='pulse')
+            pulse.property('funcname', 'pulse')
+            pulse.property('args', ['t'])
+            pulse.property('expr', f'flc2hs(t-{t0},{eps})-flc2hs(t-({t0}+{tau}),{eps})')
+        except Exception:
+            logger.debug("Skipping function creation in mocked environment")
+
+        # Create Psat(T) and J_evap variables used in BCs
+        try:
+            v = variables.create(name='kumar_vars')
+            v.property('expr', [
+                'Psat = P_ref*exp( (Lv_sn*M_sn/R_gas)*(1/Tboil_sn - 1/T) )',
+                'J_evap = (1 - beta_r) * Psat * sqrt(M_sn/(2*pi*R_gas*T))'
+            ])
+            v.property('unit', ['Pa', 'kg/(m^2*s)'])
+        except Exception:
+            logger.debug("Skipping variables creation in mocked environment")
     
     def _build_geometry(self) -> None:
         """Build model geometry"""

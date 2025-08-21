@@ -93,35 +93,22 @@ class SelectionManager:
         s_surf.property('input', [self.selections['s_drop']])
         selections['s_surf'] = s_surf
         
-        # Domain boundary selections for boundary conditions
-        boundaries = ['left', 'right', 'top', 'bottom']
-        for boundary in boundaries:
-            s_boundary = selections_container.create('Explicit', name=f's_{boundary}')
-            # Use geometric conditions to select domain boundaries
-            condition = self._get_boundary_condition(boundary)
-            s_boundary.property('condition', condition)
-            selections[f's_{boundary}'] = s_boundary
+        # Only create domain boundary selections if specifically needed
+        # For now, skip creating them as they cause issues and aren't used in KUMAR-2D
+        # TODO: Add conditional creation based on model variant if needed
         
-        logger.info("Created boundary selections: s_surf, s_left, s_right, s_top, s_bottom")
+        logger.info("Created boundary selections: s_surf")
         return selections
     
     def _create_physics_selections(self) -> Dict[str, Any]:
         """Create selections for specific physics interfaces"""
         selections = {}
         
-        # Get selections container
-        try:
-            selections_container = self.model/'selections'
-        except TypeError:
-            # For testing with mocks, fall back to method call
-            selections_container = self.model.selections()
+        # For Kumar model, we don't need special physics selections
+        # The working version applies heat sources directly to domains
+        # with spatial expressions for localization
         
-        # Laser heat source selection (part of droplet surface)
-        s_laser = selections_container.create('Explicit', name='s_laser')
-        s_laser.property('input', [self.selections['s_surf']])
-        selections['s_laser'] = s_laser
-        
-        logger.info("Created physics selections: s_laser")
+        logger.info("Created physics selections: (none needed for Kumar model)")
         return selections
         s_outlet.property('entitydim', 0)
         selections['s_outlet'] = s_outlet

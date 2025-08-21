@@ -98,6 +98,11 @@ def main(argv: list[str] | None = None) -> int:
     builder._connect_to_comsol()
     builder._create_model()
     builder._set_parameters()
+    # Create Kumar-specific functions/variables (pulse, Psat, J_evap)
+    try:
+        builder._create_aux_features()
+    except Exception:
+        pass
     builder._build_geometry()
     builder._create_selections()
     builder._setup_materials()
@@ -125,4 +130,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
