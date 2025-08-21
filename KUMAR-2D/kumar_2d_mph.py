@@ -281,8 +281,8 @@ def main(argv: list[str] | None = None) -> int:
         ),
         formatter_class=argparse.RawTextHelpFormatter
     )
-    subparsers = ap.add_subparsers(dest='command')
-    subparsers.add_parser('examples', help='Show common run examples')
+    # Use a dashed flag for examples for consistency
+    ap.add_argument('--examples', action='store_true', help='Show common run examples')
     g = ap.add_mutually_exclusive_group()
     g.add_argument('--dry-run', action='store_true')
     g.add_argument('--check-only', action='store_true')
@@ -291,7 +291,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument('--log-level', type=str, default='INFO')
     args = ap.parse_args(argv)
 
-    if getattr(args, 'command', None) == 'examples':
+    if getattr(args, 'examples', False):
         examples = [
             '# Dry-run (no COMSOL):',
             'python KUMAR-2D/kumar_2d_mph.py --dry-run',

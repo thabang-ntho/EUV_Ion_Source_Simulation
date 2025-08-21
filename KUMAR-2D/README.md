@@ -59,7 +59,7 @@ Implemented physics and boundary conditions (paper‑faithful)
 - Marangoni stress (droplet interface):
   - Tangential stress ∝ surface tension gradient (via `d_sigma_dT`), set on `spf` at `s_surf`.
 - Species flux (evaporation):
-  - Interface flux in `tds` on `s_surf`: `N0 = J_evap/M_sn` (flip sign if inward‑positive convention is preferred).
+  - Interface flux in `tds` on `s_surf`: `N0 = -J_evap/M_sn` (inward‑positive convention; outward evaporation is negative inward flux).
 - Saturation pressure and evaporation rate:
   - `Psat(T) = P_ref * exp( (Lv_sn*M_sn/R_gas) * (1/Tboil_sn - 1/T) )`
   - `J_evap = (1 - beta_r) * Psat(T) * sqrt( M_sn/(2*pi*R_gas*T) )`

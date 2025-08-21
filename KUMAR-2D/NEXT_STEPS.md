@@ -108,13 +108,14 @@ Concrete plan:
 - Environment: activate venv (. .venv/bin/activate); set COMSOL_HOST/PORT if remote; export RUN_COMSOL=1.
 - Build-only check: RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --check-only --out KUMAR-2D/results/kumar2d_model.mph.
 - Inspect in COMSOL GUI: verify ht/ht2/spf/spf2/tds attached, Qb_input formulas on s_surf, recoil stress set, mesh boundary layer present.
-- Species flux sign: confirm boundary definition; if inward-positive, change N0 to -J_evap/M_sn in src/mph_core/physics.py.
+- Species flux sign: confirm boundary definition; set N0 to -J_evap/M_sn in src/mph_core/physics.py (done).
 - Marangoni stress: refine tangential stress expression matching paper gradient form (optionally derive via sigma(T) variable).
 - Postprocess: add temperature/velocity/pressure PNG exports via ResultsProcessor; test on a short run (t_end ~ 50 ns).
 - Solve smoke test: RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --solve --host $COMSOL_HOST --port $COMSOL_PORT; capture logs.
 - Compare: open mph side-by-side with KUMAR-2D/Kumar_2D_demo_v5.java structure; match interface names and features.
 - Mesh tuning: adjust droplet hmax/hmin and boundary layer n/thickness; document in parameters.txt if changed.
-- Tests: add/adjust mocks for _create_aux_features() if needed; ensure pytest -q stays green.
+- CLI: ensure --examples is a dashed flag for both KUMAR-2D scripts (done).
+- Tests: add/adjust mocks for _create_aux_features() if needed; ensure pytest -q stays green (green).
 - Docs: if sign change or stress refinement applied, update this README and NEXT_STEPS again.
 
 

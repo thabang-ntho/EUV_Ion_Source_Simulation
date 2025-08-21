@@ -217,10 +217,12 @@ class PhysicsManager:
         # Assign to gas domain (domain 1)
         tds.select(self.selections['s_gas'])
         
-        # Add evaporation flux boundary feature
+        # Add evaporation flux boundary feature (inward-positive sign convention)
         fl = tds.create('FluxBoundary', 1, name='fl1')
         fl.select(self.selections['s_surf'])
-        fl.property('N0', 'J_evap/M_sn')
+        # COMSOL's N0 is inward-positive; evaporation is outward from liquid → gas
+        # Convert mass flux to molar flux by dividing by M_sn and flip sign
+        fl.property('N0', '-J_evap/M_sn')
         
         # Add convection-diffusion in gas domain
         cdm = tds.create('ConvectionDiffusionMigration', 2, name='cdm2')
@@ -333,7 +335,8 @@ class PhysicsManager:
         # Boundary conditions
         evaporation = tds.create('ConcentrationFlux', 1, name='evaporation')
         evaporation.property('selection', self.selections['s_surf'])
-        evaporation.property('N0', 'J_evap')  # Evaporation flux from droplet
+        # Inward-positive convention: outward evaporation becomes negative inward flux
+        evaporation.property('N0', '-J_evap/M_sn')
         
         # Domain boundaries (typically open)
         outlet = tds.create('OpenBoundary', 1, name='outlet_bc')

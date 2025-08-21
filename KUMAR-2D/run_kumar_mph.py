@@ -79,8 +79,8 @@ Examples:
         ),
         formatter_class=argparse.RawTextHelpFormatter
     )
-    subparsers = ap.add_subparsers(dest='command')
-    sp_ex = subparsers.add_parser('examples', help='Show common run examples')
+    # Use a dashed flag for examples for consistency
+    ap.add_argument('--examples', action='store_true', help='Show common run examples')
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--dry-run", action="store_true", help="No COMSOL; print plan and exit")
     g.add_argument("--check-only", action="store_true", help="Build only, no solve")
@@ -92,7 +92,7 @@ Examples:
     ap.add_argument("--log-level", type=str, default="INFO")
     args = ap.parse_args(argv)
 
-    if getattr(args, 'command', None) == 'examples':
+    if getattr(args, 'examples', False):
         examples = [
             '# Dry-run (no COMSOL):',
             'python KUMAR-2D/run_kumar_mph.py --dry-run',
