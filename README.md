@@ -71,6 +71,20 @@ Environment variables (optional):
 - `COMSOL_CORES`: number of server cores to request if supported by `mph.start()`.
 You can also pass `--host/--port` flags which are mapped to these envs.
 
+### Environment Variables (Details)
+
+- `COMSOL_HOST` and `COMSOL_PORT`: When set, the runner attempts to connect to a remote COMSOL server using `mph.start(host=..., port=...)`.
+- `COMSOL_CORES`: Requests a specific number of cores if your `mph` version supports `mph.start(cores=N)`.
+- `JAVA_HOME`, `COMSOL_HOME`, `LMCOMSOL_LICENSE_FILE` (or `LM_LICENSE_FILE`): Must be configured according to your local COMSOL installation. See `scripts/setup_comsol_env.sh` for an example.
+
+Example:
+```bash
+export COMSOL_HOST=127.0.0.1
+export COMSOL_PORT=2036
+export COMSOL_CORES=4
+python -m src.cli.mph_runner --check-only --variant fresnel
+```
+
 #### Legacy Interface
 The legacy pp_model CLI has been removed in mph_dev. Use the modern `euv-mph` runner.
 
@@ -168,6 +182,14 @@ make clean
   - `pytest -q tests/test_mph_geometry.py tests/test_mph_selections.py tests/test_mph_materials.py tests/test_mph_physics.py tests/test_mph_study_activation.py tests/test_mph_modelbuilder.py` – core mph tests.
   - `make mph-check` – build-only via MPh saves `.mph` (requires COMSOL env configured but does not solve).
   - `RUN_COMSOL=1 make test-comsol` – enable COMSOL tests if your server is available.
+
+### Troubleshooting Activation
+
+- Set `--log-level DEBUG` (or `LOG_LEVEL=DEBUG`) to print activation payloads and types.
+- Ensure a component exists before geometry; the runner creates `component` so frames (`spatial1`, `material1`) are present.
+- Activation uses alternating keys/values, e.g., `[physics/'heat_transfer', 'on', 'frame:spatial1', 'on', 'frame:material1', 'on']`.
+- If activation fails with “Invalid property value”, the code falls back to stringified node paths; check tags/paths in logs.
+- Confirm that the expected physics interface exists (e.g., heat_transfer) and that frame tags match your COMSOL version.
 
 
 ## 🔧 Requirements
