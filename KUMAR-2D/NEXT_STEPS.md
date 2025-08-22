@@ -116,6 +116,37 @@ Concrete plan:
 - Mesh tuning: adjust droplet hmax/hmin and boundary layer n/thickness; document in parameters.txt if changed.
 - CLI: ensure --examples is a dashed flag for both KUMAR-2D scripts (done).
 - Tests: add/adjust mocks for _create_aux_features() if needed; ensure pytest -q stays green (green).
+
+## Paper Mapping (Equations to Code)
+
+This section maps Kumar paper equations and boundary conditions to the implementation in this repo for traceability.
+
+- Surface Gaussian laser heat source at metal/gas interface (paper: Section 2.1, surface Gaussian q_m):
+  - Code: `src/mph_core/physics.py` in `_setup_heat_transfer()` → `ht.create('BoundaryHeatSource'...)` with `Qb_input = (2*a_abs*P_laser)/(pi*Rl_spot^2)*exp(-2*((x-x0)^2+(y-y0)^2)/Rl_spot^2)*pulse(t)/1[s]` applied to `s_surf`.
+  - CLI: `KUMAR-2D/...` runners describe identical expression in help text.
+
+- Evaporation latent heat coupling ±Lv·J_evap (paper: Section 2.4, q_g = −q_m):
+  - Liquid side: combined into `ht` boundary `Qb_input = q_gauss - Lv_sn*J_evap`.
+  - Gas side: `src/mph_core/physics.py` in `_setup_heat_transfer_gas()` → `ht2` with `Qb_input = Lv_sn*J_evap` on `s_surf`.
+
+- Recoil pressure (paper Eq. (9)-(10): p_r = (1+β_r/2)·P_sat, P_sat via Clausius–Clapeyron-like form):
+  - Variables: `src/mph_core/model_builder.py` `_create_aux_features()` defines `Psat = P_ref*exp((Lv_sn*M_sn/R_gas)*(1/Tboil_sn - 1/T))`.
+  - Boundary stress: `src/mph_core/physics.py` in `_setup_laminar_flow_gas()` → `spf2` with normal stress `f0 = -(1+beta_r/2)*Psat` on `s_surf`.
+
+- Marangoni (thermocapillary) tangential stress (paper Eq. (13), σ = σ_f + γ_m·T, tangential gradient):
+  - σ(T): analytic function `sigma` and parameter `d_sigma_dT` documented; `KUMAR-2D/kumar_2d_mph.py` shows explicit Marangoni example.
+  - Implementation: `src/mph_core/physics.py` → `spf` boundary stress feature on `s_surf` for tangential stress (expression refined per paper spec as needed).
+
+- Species flux at interface (paper Eq. (23)):
+  - J_evap variable: `src/mph_core/model_builder.py` `_create_aux_features()` sets `J_evap = (1 - beta_r) * Psat * sqrt(M_sn/(2*pi*R_gas*T))`.
+  - TDS boundary flux: `src/mph_core/physics.py` uses inward-positive convention `N0 = -J_evap/M_sn` on `s_surf`.
+
+- Diffusion in gas (paper Section 2.6, Fick’s law and Fuller approx):
+  - TDS interface created in `src/mph_core/physics.py` with convection–diffusion and open boundaries; diffusivity parameterized via `D_tin` (user-configurable).
+
+- Time-dependent study:
+  - `src/mph_core/studies.py` creates transient step with physics list including `ht`, `ht2`, `spf`, `spf2`, `tds`; tolerances and output times configurable via params.
+
 - Docs: if sign change or stress refinement applied, update this README and NEXT_STEPS again.
 
 
