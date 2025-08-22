@@ -24,6 +24,15 @@ Adapter session fails immediately
 COMSOL in CI
 - CI does not run COMSOL; tests that require it are under `@pytest.mark.comsol` and are skipped unless `RUN_COMSOL=1`.
 
+Quick environment one-liner (KUMAR-2D check-only)
+```bash
+.venv/bin/activate && export \
+COMSOL_HOME=/home/xdadmin/comsol62/multiphysics && export \
+JAVA_HOME=/home/xdadmin/comsol62/multiphysics/java/glnxa64/jre && \
+RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --check-only --out \
+KUMAR-2D/results/kumar2d_model.mph
+```
+
 Logs and provenance
 - Set `LOG_LEVEL=DEBUG` to print more details.
 - Provenance writes to `results/meta/provenance.json`; inspect `software.comsol` and `git` fields for context.

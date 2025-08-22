@@ -75,6 +75,10 @@ Examples:
   python KUMAR-2D/run_kumar_mph.py --dry-run
   RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --check-only --out KUMAR-2D/results/kumar2d_model.mph
   RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --solve --host $COMSOL_HOST --port $COMSOL_PORT --out KUMAR-2D/results/kumar2d_model.mph
+  .venv/bin/activate && export \
+  COMSOL_HOME=/home/xdadmin/comsol62/multiphysics && export \
+  JAVA_HOME=/home/xdadmin/comsol62/multiphysics/java/glnxa64/jre && \
+  RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --check-only --out KUMAR-2D/results/kumar2d_model.mph
 """
         ),
         formatter_class=argparse.RawTextHelpFormatter
@@ -102,6 +106,9 @@ Examples:
             '',
             '# Solve (with COMSOL host/port):',
             'RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --solve --host $COMSOL_HOST --port $COMSOL_PORT --out KUMAR-2D/results/kumar2d_model.mph',
+            '',
+            '# One-liner (venv + COMSOL env + check-only):',
+            '.venv/bin/activate && export \\\n+COMSOL_HOME=/home/xdadmin/comsol62/multiphysics && export \\\n+JAVA_HOME=/home/xdadmin/comsol62/multiphysics/java/glnxa64/jre && \\\n+RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --check-only --out \\\n+KUMAR-2D/results/kumar2d_model.mph',
             '',
             '# Environment tips:',
             '. .venv/bin/activate  # Python venv',

@@ -278,6 +278,7 @@ def main(argv: list[str] | None = None) -> int:
             'Examples:\n'
             '  python KUMAR-2D/kumar_2d_mph.py --dry-run\n'
             '  RUN_COMSOL=1 python KUMAR-2D/kumar_2d_mph.py --check-only --out KUMAR-2D/results/kumar2d_model.mph'
+            "\n  .venv/bin/activate && export \\\n+COMSOL_HOME=/home/xdadmin/comsol62/multiphysics && export \\\n+JAVA_HOME=/home/xdadmin/comsol62/multiphysics/java/glnxa64/jre && \\\n+RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --check-only --out \\\n+KUMAR-2D/results/kumar2d_model.mph\n"
         ),
         formatter_class=argparse.RawTextHelpFormatter
     )
@@ -301,6 +302,9 @@ def main(argv: list[str] | None = None) -> int:
             '',
             '# Solve (with COMSOL host/port):',
             'RUN_COMSOL=1 python KUMAR-2D/kumar_2d_mph.py --solve --host $COMSOL_HOST --port $COMSOL_PORT --out KUMAR-2D/results/kumar2d_model.mph',
+            '',
+            '# One-liner (venv + COMSOL env + check-only):',
+            '.venv/bin/activate && export \\\n+COMSOL_HOME=/home/xdadmin/comsol62/multiphysics && export \\\n+JAVA_HOME=/home/xdadmin/comsol62/multiphysics/java/glnxa64/jre && \\\n+RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --check-only --out \\\n+KUMAR-2D/results/kumar2d_model.mph',
             '',
             '# Environment tips:',
             '. .venv/bin/activate  # Python venv',

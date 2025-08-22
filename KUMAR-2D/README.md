@@ -41,6 +41,15 @@ Outputs
 - `results/kumar2d_model_solved.mph` (after solve)
 - Optional result plots via `src/mph_core/postprocess.py`
 
+Quick environment one-liner
+```bash
+.venv/bin/activate && export \
+COMSOL_HOME=/home/xdadmin/comsol62/multiphysics && export \
+JAVA_HOME=/home/xdadmin/comsol62/multiphysics/java/glnxa64/jre && \
+RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --check-only --out \
+KUMAR-2D/results/kumar2d_model.mph
+```
+
 Implemented physics and boundary conditions (paper‑faithful)
 - Domains and physics:
   - Heat Transfer in Fluids (droplet): `ht` on `s_drop`.

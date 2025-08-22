@@ -25,7 +25,12 @@ except Exception:
 def main():
     """CLI: build (and optionally solve) the model via MPh."""
     ap = argparse.ArgumentParser(
-        description="Build (and optionally solve) the pre-pulse tin droplet model via MPh."
+        description="Build (and optionally solve) the pre-pulse tin droplet model via MPh.",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=(
+            "Environment one-liner (KUMAR-2D check-only):\n"
+            "  .venv/bin/activate && export \\\n+COMSOL_HOME=/home/xdadmin/comsol62/multiphysics && export \\\n+JAVA_HOME=/home/xdadmin/comsol62/multiphysics/java/glnxa64/jre && \\\n+RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --check-only --out \\\n+KUMAR-2D/results/kumar2d_model.mph\n"
+        )
     )
     ap.add_argument("--no-solve", action="store_true",
                     help="Build only; do not run the transient solver.")

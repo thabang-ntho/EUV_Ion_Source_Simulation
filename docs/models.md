@@ -78,5 +78,14 @@ with adapter.open() as client:
 
 - No default code paths use adapters or the plugin registry yet.
 - The goal is to make future integration tests cleaner, enable optional
+
+Quick environment one-liner (KUMAR-2D)
+```bash
+.venv/bin/activate && export \
+COMSOL_HOME=/home/xdadmin/comsol62/multiphysics && export \
+JAVA_HOME=/home/xdadmin/comsol62/multiphysics/java/glnxa64/jre && \
+RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --check-only --out \
+KUMAR-2D/results/kumar2d_model.mph
+```
   extension points, and keep vendor specifics isolated.
 - Async/parallel sweeps are deferred to Phase 3 and will remain opt-in.
