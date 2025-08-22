@@ -1,0 +1,5 @@
+"" if(material.relVol<0,NaN*test(material.J_mesh),-material.PXXm_mesh*test(material.FXXm_mesh)-material.PXYm_mesh*test(material.FXYm_mesh)-material.PXZm_mesh*test(material.FXZm_mesh)-material.PYXm_mesh*test(material.FYXm_mesh)-material.PYYm_mesh*test(material.FYYm_mesh)-material.PYZm_mesh*test(material.FYZm_mesh)-material.PZXm_mesh*test(material.FZXm_mesh)-material.PZYm_mesh*test(material.FZYm_mesh)-material.PZZm_mesh*test(material.FZZm_mesh)) 4 Mesh "Domains 1–2"
+"" (-material.Xt_free+disp2.vX)*test(-material.u_lm) 4 Geometry "Boundaries 5–8"
+"" test(material.X_free)*material.u_lm 4 Geometry "Boundaries 5–8"
+"" (-material.Yt_free+disp2.vY)*test(-material.v_lm) 4 Geometry "Boundaries 5–8"
+"" test(material.Y_free)*material.v_lm 4 Geometry "Boundaries 5–8"

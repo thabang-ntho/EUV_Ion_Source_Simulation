@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/euv-sim/sweeps/manifest.schema.json",
+  "title": "EUV Sim Sweep Manifest",
+  "type": "object",
+  "required": ["schema", "created_at", "runs"],
+  "properties": {
+    "schema": { "type": "string", "pattern": "^sweep-manifest/\\d+$" },
+    "tool_version": { "type": ["string", "null"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["run_id", "params", "out_dir"],
+        "properties": {
+          "run_id": { "type": "string" },
+          "params": { "type": "object", "additionalProperties": true },
+          "out_dir": { "type": "string" },
+          "metrics": { "type": ["object", "null"], "additionalProperties": true }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

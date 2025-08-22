@@ -22,6 +22,10 @@ Artifacts (future)
 - Each run writes to results/sweep/<run_id>/ with its own provenance.json and compact CSV outputs.
 - A sweep index (JSON) aggregates parameters and key metrics for quick analysis.
 
+Manifest pattern (planned)
+- Each sweep run writes a small manifest (JSON/CSV) enumerating the parameter grid and output paths.
+- Manifests include the schema_version, tool version, and a pointer to per-run provenance.
+- Default outputs (CSV/PNG) are retained; Parquet/HDF5 remain opt-in per data formats guidance.
+
 Notes
 - Implementation will be strictly additive and opt-in; no changes to default CLI behavior.
-
