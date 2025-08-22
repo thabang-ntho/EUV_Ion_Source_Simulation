@@ -47,6 +47,13 @@ Examples:
   %(prog)s kumar --config data/laser_parameters_pp_v2.txt --output kumar_model.mph
   %(prog)s fresnel --list-params
   %(prog)s --validate-config data/global_parameters_pp_v2.txt
+
+Environment one-liner (KUMAR-2D check-only):
+  .venv/bin/activate && export \
+  COMSOL_HOME=/home/xdadmin/comsol62/multiphysics && export \
+  JAVA_HOME=/home/xdadmin/comsol62/multiphysics/java/glnxa64/jre && \
+  RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --check-only --out \
+  KUMAR-2D/results/kumar2d_model.mph
             """
         )
         

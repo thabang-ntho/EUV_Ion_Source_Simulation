@@ -24,6 +24,15 @@ python -m src.mph_cli fresnel \
     --solve --extract-results
 ```
 
+Quick environment one-liner (KUMAR-2D check-only)
+```bash
+.venv/bin/activate && export \
+COMSOL_HOME=/home/xdadmin/comsol62/multiphysics && export \
+JAVA_HOME=/home/xdadmin/comsol62/multiphysics/java/glnxa64/jre && \
+RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --check-only --out \
+KUMAR-2D/results/kumar2d_model.mph
+```
+
 3. **Programmatic Usage**:
 ```python
 from src.models import build_fresnel_model

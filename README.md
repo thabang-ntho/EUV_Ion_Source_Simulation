@@ -69,6 +69,15 @@ python -m src.mph_cli fresnel --dry-run
 
 # Override parameters
 python -m src.mph_cli fresnel --solve -p R_drop=30 -p T_ref=350
+
+Quick environment one-liner (KUMAR-2D)
+```bash
+.venv/bin/activate && export \
+COMSOL_HOME=/home/xdadmin/comsol62/multiphysics && export \
+JAVA_HOME=/home/xdadmin/comsol62/multiphysics/java/glnxa64/jre && \
+RUN_COMSOL=1 python KUMAR-2D/run_kumar_mph.py --check-only --out \
+KUMAR-2D/results/kumar2d_model.mph
+```
 ```
 
 #### Legacy Interface
