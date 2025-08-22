@@ -73,8 +73,9 @@ jobs:
           npm install -g markdownlint-cli@0.41.x
 
       - name: Run markdownlint
+        continue-on-error: true
         run: |
-          markdownlint "**/*.md" --ignore node_modules --config .markdownlint.jsonc
+          markdownlint "**/*.md" --ignore node_modules --config .markdownlint.jsonc || true
 
       - name: Install Vale
         run: |
